@@ -19,3 +19,6 @@ Redis数据库访问
  
  
  注：在对象构建时，已保存在XJava中，其XID为this.getXID()
+ 
+ 
+ 引用 https://github.com/HY-ZhengWei/hy.common.base 类库

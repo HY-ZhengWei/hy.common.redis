@@ -2,11 +2,11 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
-	<classpathentry kind="lib" path="lib/hy.common.base.jar"/>
 	<classpathentry kind="lib" path="lib/commons-pool2-2.0.jar" sourcepath="D:/tools/mavne/localRepository/org/apache/commons/commons-pool2/2.0/commons-pool2-2.0-sources.jar"/>
 	<classpathentry kind="lib" path="lib/junit-4.11.jar"/>
 	<classpathentry kind="lib" path="lib/jedis-2.6.0.jar" sourcepath="D:/tools/mavne/localRepository/redis/clients/jedis/2.6.0/jedis-2.6.0-sources.jar"/>
 	<classpathentry kind="lib" path="lib/hy.common.tpool.jar"/>
 	<classpathentry kind="lib" path="lib/xjava.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/hy.common.base"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
