@@ -22,3 +22,4 @@ Redis数据库访问
  
  
  引用 https://github.com/HY-ZhengWei/hy.common.base 类库
+ 引用 https://github.com/HY-ZhengWei/hy.common.tpool 类库
