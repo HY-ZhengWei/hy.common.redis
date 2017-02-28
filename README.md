@@ -20,7 +20,10 @@ Redis数据库访问
  
  注：在对象构建时，已保存在XJava中，其XID为this.getXID()
  
+
  
+=====
+#### 本项目引用Jar包，其源码链接如下 
  引用 https://github.com/HY-ZhengWei/hy.common.base 类库
  
  引用 https://github.com/HY-ZhengWei/hy.common.tpool 类库
