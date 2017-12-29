@@ -1,11 +1,13 @@
 #!/bin/sh
 
+cd bin
 
-cd ./bin
 
 rm -R ./org/hy/common/redis/junit
 
-jar cvfm hy.common.redis.jar MANIFEST.MF LICENSE org
+
+jar cvfm hy.common.redis.jar MANIFEST.MF META-INF org
+
 cp hy.common.redis.jar ..
 rm hy.common.redis.jar
 cd ..
