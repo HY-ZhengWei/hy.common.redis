@@ -1038,7 +1038,7 @@ public class Redis
             this.job.setIntervalType(Job.$IntervalType_Minute);
             this.job.setIntervalLen( 1);
             this.job.setStartTime(   Date.getNowTime().getFull());
-            this.job.setXjavaID(     this.xjavaID);
+            this.job.setXid(         this.xjavaID);
             this.job.setMethodName(  "shardExceptionIsConnection");
         }
         
