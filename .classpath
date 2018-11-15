@@ -7,6 +7,6 @@
 	<classpathentry kind="lib" path="lib/jedis-2.6.0.jar" sourcepath="D:/tools/mavne/localRepository/redis/clients/jedis/2.6.0/jedis-2.6.0-sources.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/hy.common.base"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/hy.common.tpool"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/XJava"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/hy.common.xjava"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
