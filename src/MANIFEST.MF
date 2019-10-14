@@ -1,5 +1,5 @@
-Manifest-Version: 1.0.1
+Manifest-Version: 1.0.2
 Created-By: HY.ZhengWei@qq.com  2014-09
-Specification-Version: 1.0.1  2019-02-27
+Specification-Version: 1.0.2  2019-10-14
 SourceCode: https://github.com/HY-ZhengWei/hy.common.Redis
 Build-JDK: 1.6
