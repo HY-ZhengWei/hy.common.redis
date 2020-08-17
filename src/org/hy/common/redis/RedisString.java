@@ -454,7 +454,7 @@ public class RedisString
     {
         if ( i_Seconds < 1 )
         {
-            throw new VerifyError("ExpireTime Seconds < 1.");
+            throw new IndexOutOfBoundsException("ExpireTime Seconds < 1.");
         }
         
         RData v_RData = new RData(i_Key ,i_Value);
@@ -483,7 +483,7 @@ public class RedisString
     {
         if ( i_Seconds < 1 )
         {
-            throw new VerifyError("ExpireTime Seconds < 1.");
+            throw new IndexOutOfBoundsException("ExpireTime Seconds < 1.");
         }
         
         RData v_RData = new RData(i_Key ,i_Value);

@@ -148,7 +148,7 @@ public class RedisKey
         
         if ( i_Seconds <= 0 )
         {
-            throw new VerifyError("i_Seconds <= 0.");
+            throw new IndexOutOfBoundsException("i_Seconds <= 0.");
         }
         
         ShardedJedis v_ShardedJedis = null;

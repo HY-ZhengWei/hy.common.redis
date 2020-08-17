@@ -189,7 +189,7 @@ public class Redis
             
             if ( 0 >= v_Host.getPort() || v_Host.getPort() >= 65535 )
             {
-                throw new VerifyError("Port is not 0~65535.");
+                throw new RuntimeException("Port is not 0~65535.");
             }
             
             if ( JavaHelp.isNull(v_Host.getName()) )
@@ -200,7 +200,7 @@ public class Redis
                 
                 if ( shardInfoMap.containsKey(v_Name) )
                 {
-                    throw new VerifyError("JedisShardInfo name[" + v_Name + "] is same.");
+                    throw new RuntimeException("JedisShardInfo name[" + v_Name + "] is same.");
                 }
                 shardInfoMap.put(v_Name ,v_Clone);
             }
@@ -208,7 +208,7 @@ public class Redis
             {
                 if ( shardInfoMap.containsKey(v_Host.getName()) )
                 {
-                    throw new VerifyError("JedisShardInfo name[" + v_Host.getName() + "] is same.");
+                    throw new RuntimeException("JedisShardInfo name[" + v_Host.getName() + "] is same.");
                 }
                 shardInfoMap.put(v_Host.getName() ,v_Host);
             }
@@ -427,7 +427,7 @@ public class Redis
     {
         if ( this.getRKey().isExists(i_TableName) )
         {
-            throw new VerifyError("TableName[" + i_TableName + "] is exists.");
+            throw new RuntimeException("TableName[" + i_TableName + "] is exists.");
         }
         
         if ( !this.getRHash().isExists($MetaData_Tables ,i_TableName) )
@@ -721,7 +721,7 @@ public class Redis
     {
         if ( !this.getRKey().isExists(i_TableName) )
         {
-            throw new VerifyError("TableName[" + i_TableName + "] is exists.");
+            throw new RuntimeException("TableName[" + i_TableName + "] is exists.");
         }
         
         if ( JavaHelp.isNull(i_RDatas) )
@@ -813,7 +813,7 @@ public class Redis
         
         if ( !this.getRKey().isExists(i_TableName) )
         {
-            throw new VerifyError("TableName[" + i_TableName + "] is exists.");
+            throw new RuntimeException("TableName[" + i_TableName + "] is exists.");
         }
         
         String [] v_RowKeys = this.makeRowKeys(i_TableName ,i_Keys);
@@ -867,7 +867,7 @@ public class Redis
     {
         if ( !this.getRKey().isExists(i_TableName) )
         {
-            throw new VerifyError("TableName[" + i_TableName + "] is exists.");
+            throw new RuntimeException("TableName[" + i_TableName + "] is exists.");
         }
         
         if ( JavaHelp.isNull(i_RDatas) )
@@ -1173,7 +1173,7 @@ public class Redis
         {
             if ( runMode != RunMode.$Backup )
             {
-                throw new VerifyError("ShardInfo size is 1. Only $Backup runmode.");
+                throw new RuntimeException("ShardInfo size is 1. Only $Backup runmode.");
             }
         }
     }
