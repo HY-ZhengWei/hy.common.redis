@@ -24,20 +24,14 @@
   </properties>
 
   <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.11</version>
-      <scope>test</scope>
-    </dependency>
-    
-    <!-- https://github.com/HY-ZhengWei/XJava -->
-    <!-- https://gitee.com/HY-ZhengWei/XJava -->
+    <!-- 
+    此为建议版本，不再强行依赖，而由外界使用者来决定
     <dependency>
         <groupId>org</groupId>
         <artifactId>hy.common.xjava</artifactId>
-        <version>4.1.1</version>
+        <version>4.1.5</version>
     </dependency>
+    -->
     
     <!--  
     <dependency>
