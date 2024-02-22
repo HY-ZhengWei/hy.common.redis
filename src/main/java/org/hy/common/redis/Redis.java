@@ -195,7 +195,7 @@ public class Redis
             if ( JavaHelp.isNull(v_Host.getName()) )
             {
                 String         v_Name  = v_Host.getHost() + ":" + v_Host.getPort();
-                JedisShardInfo v_Clone = new JedisShardInfo(v_Host.getHost() ,v_Host.getPort() ,v_Host.getTimeout() ,v_Name);
+                JedisShardInfo v_Clone = new JedisShardInfo(v_Host.getHost() ,v_Host.getPort() ,v_Host.getConnectionTimeout() ,v_Name);
                 v_Clone.setPassword(v_Host.getPassword());
                 
                 if ( shardInfoMap.containsKey(v_Name) )
@@ -355,7 +355,9 @@ public class Redis
     {
         try
         {
-            shardedPool.returnResource(i_ShardedJedis);
+            shardedPool.close();
+            // 2.6.0的版本如下方法释放
+            // shardedPool.returnResource(i_ShardedJedis);
         }
         catch (Exception exce)
         {
@@ -364,7 +366,8 @@ public class Redis
             // 释放Redis对象。
             // 在程序出错时，必须调用returnBrokenResource返还给pool，
             // 否则下次通过getResource得到的instance的缓冲区可能还存在数据，出现问题
-            shardedPool.returnBrokenResource(i_ShardedJedis);
+            // 2.6.0的版本如下方法释放
+            // shardedPool.returnBrokenResource(i_ShardedJedis);
         }
     }
     
@@ -394,7 +397,9 @@ public class Redis
             if ( i_Exce == null )
             {
                 // 返还到连接池。正常情况下使用此方法
-                shardedPool.returnResource(i_ShardedJedis);
+                shardedPool.close();
+                // 2.6.0的版本如下方法释放
+                // shardedPool.returnResource(i_ShardedJedis);
             }
             else
             {
@@ -403,8 +408,9 @@ public class Redis
                 // 释放Redis对象。
                 // 在程序出错时，必须调用returnBrokenResource返还给pool，
                 // 否则下次通过getResource得到的instance的缓冲区可能还存在数据，出现问题
-                shardedPool.returnBrokenResource(i_ShardedJedis);
-                shardedPool.returnResource(      i_ShardedJedis);
+                // 2.6.0的版本如下方法释放
+                // shardedPool.returnBrokenResource(i_ShardedJedis);
+                // shardedPool.returnResource(      i_ShardedJedis);
             }
         }
         catch (Exception exce)

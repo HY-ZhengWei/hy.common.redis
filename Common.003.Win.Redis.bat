@@ -27,3 +27,5 @@ copy hy.common.redis-sources.jar ..\..\..
 del /Q hy.common.redis-sources.jar
 rd /s/q META-INF
 cd ..\..\..
+
+pause
