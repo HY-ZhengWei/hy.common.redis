@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<config>
+
+    <import name="xobjects"        class="java.util.ArrayList" />
+    <import name="redis"           class="org.hy.common.redis.cluster.RedisConfig" />
+    <import name="redisCluster"    class="org.hy.common.redis.cluster.RedisClusterConfig" />
+    
+    
+    
+    <xobjects>
+        
+        <redis id="RedisPwd">
+            <pwd encrypt="org.hy.common.StringHelp">密码</pwd>
+        </redis>
+        
+        
+        
+        <redisCluster id="RedisClusterConfig">
+            <add><redis><host>10.1.85.23</host><port>18501</port><pwd ref="RedisPwd.getPwd" /></redis></add>
+            <add><redis><host>10.1.85.23</host><port>18502</port><pwd ref="RedisPwd.getPwd" /></redis></add>
+            <add><redis><host>10.1.85.22</host><port>18503</port><pwd ref="RedisPwd.getPwd" /></redis></add>
+            <add><redis><host>10.1.85.22</host><port>18504</port><pwd ref="RedisPwd.getPwd" /></redis></add>
+            <add><redis><host>10.1.85.21</host><port>18505</port><pwd ref="RedisPwd.getPwd" /></redis></add>
+            <add><redis><host>10.1.85.21</host><port>18506</port><pwd ref="RedisPwd.getPwd" /></redis></add>
+        </redisCluster>
+        
+    </xobjects>
+
+</config>
