@@ -10,19 +10,29 @@
     
     <xobjects>
         
-        <redis id="RedisPwd">
-            <pwd encrypt="org.hy.common.StringHelp">密码</pwd>
+        <!-- 节点参数统一配置模板 -->
+        <redis id="Redis">
+            <pwd encrypt="org.hy.common.StringHelp">redis@20231107</pwd>  <!-- 可选配置：密码 -->
+            <database>0</database>                                        <!-- 可选配置：数据库编号 -->
+            <ssl>false</ssl>                                              <!-- 可选配置：SSL连接协议是否开启 -->
+            <tls>false</tls>                                              <!-- 可选配置：TLS连接协议是否开启 -->
+            <timeout>15</timeout>                                         <!-- 可选配置：超时时长，单位：秒。优先级高于集群配置的超时时长 -->
         </redis>
         
         
-        
         <redisCluster id="RedisClusterConfig">
-            <add><redis><host>10.1.85.23</host><port>18501</port><pwd ref="RedisPwd.getPwd" /></redis></add>
-            <add><redis><host>10.1.85.23</host><port>18502</port><pwd ref="RedisPwd.getPwd" /></redis></add>
-            <add><redis><host>10.1.85.22</host><port>18503</port><pwd ref="RedisPwd.getPwd" /></redis></add>
-            <add><redis><host>10.1.85.22</host><port>18504</port><pwd ref="RedisPwd.getPwd" /></redis></add>
-            <add><redis><host>10.1.85.21</host><port>18505</port><pwd ref="RedisPwd.getPwd" /></redis></add>
-            <add><redis><host>10.1.85.21</host><port>18506</port><pwd ref="RedisPwd.getPwd" /></redis></add>
+            <autoReconnect>true</autoReconnect>       <!-- 可选配置：自动重新连接 -->
+            <timeout>15</timeout>                     <!-- 可选配置：超时时长，单位：秒。优先级低于每个节点配置的超时时长 -->
+            <charset>UTF-8</charset>                  <!-- 可选配置：字符集 -->
+            <redisVersion>6</redisVersion>            <!-- 可选配置：Redis协议版本 -->
+            <maxRedirects>5</maxRedirects>            <!-- 可选配置：最大重定向次数 -->
+            
+            <add><redis><init ref="Redis"/><host>10.1.85.23</host><port>18501</port></redis></add>
+            <add><redis><init ref="Redis"/><host>10.1.85.23</host><port>18502</port></redis></add>
+            <add><redis><init ref="Redis"/><host>10.1.85.22</host><port>18503</port></redis></add>
+            <add><redis><init ref="Redis"/><host>10.1.85.22</host><port>18504</port></redis></add>
+            <add><redis><init ref="Redis"/><host>10.1.85.21</host><port>18505</port></redis></add>
+            <add><redis><init ref="Redis"/><host>10.1.85.21</host><port>18506</port></redis></add>
         </redisCluster>
         
     </xobjects>

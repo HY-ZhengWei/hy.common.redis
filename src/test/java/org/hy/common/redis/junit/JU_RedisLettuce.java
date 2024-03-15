@@ -52,9 +52,6 @@ public class JU_RedisLettuce
         RedisClusterConfig v_RedisClusterConfig = (RedisClusterConfig) XJava.getObject("RedisClusterConfig");
         RedisClusterClient v_RedisCluster       = v_RedisClusterConfig.toLettuce();
 
-        // 设置集群客户端选项
-        ClusterClientOptions v_ClusterClientOptions = ClusterClientOptions.builder().autoReconnect(true).build();
-        v_RedisCluster.setOptions(v_ClusterClientOptions);
 
         // 创建连接到 Redis 集群的连接
         try
