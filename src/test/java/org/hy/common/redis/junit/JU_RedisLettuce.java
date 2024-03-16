@@ -3,6 +3,7 @@ package org.hy.common.redis.junit;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hy.common.redis.IRedis;
 import org.hy.common.redis.cluster.RedisClusterConfig;
 import org.hy.common.xml.XJava;
 import org.hy.common.xml.annotation.XType;
@@ -42,6 +43,23 @@ public class JU_RedisLettuce
             $isInit = true;
             XJava.parserAnnotation(this.getClass().getName());
         }
+    }
+    
+    
+    
+    @Test
+    public void test_XJava_Insert()
+    {
+        IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");
+        
+        Long v_Ret = v_RedisOpt.insert("库名" ,"表名" ,"主键" ,"字段名" ,"字段值");
+        System.out.println("插入结果：" + v_Ret);
+        
+        v_Ret = v_RedisOpt.update("库名" ,"表名" ,"主键" ,"字段名" ,"字段值1");
+        System.out.println("更新结果：" + v_Ret);
+        
+        v_Ret = v_RedisOpt.update("库名" ,"表名" ,"主键" ,"字段名" ,"字段值2");
+        System.out.println("更新结果：" + v_Ret);
     }
     
     
