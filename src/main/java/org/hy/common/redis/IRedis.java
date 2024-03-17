@@ -21,8 +21,9 @@ import org.hy.common.TablePartitionRID;
  * 
  * 概念2：关键字  Key   。Redis数据库中一个Key-Value的Key值。就是Map集合的Key值。
  * 
- * 注：行获取，一行数据是在Redis中用HSet命令存储的，即在获取时(get)，可用行主键直接获取，不用通过查库、查表、查主键后再获取。
+ * 注：行获取：一行数据是在Redis中用HSet命令存储的，即在获取时(get)，可用行主键直接获取，不用通过查库、查表、查主键后再获取。
  * 注：行写入，因为表、主键关系，所以在Insert、Update一行数据时，要输入库、表名称。
+ * 注：全部主键获取："库名.表名" 为关键字即可获取所有行主键列表
  * 
  * @author      ZhengWei(HY)
  * @createDate  2024-03-15

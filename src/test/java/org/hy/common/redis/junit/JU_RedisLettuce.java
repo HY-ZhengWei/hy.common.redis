@@ -50,10 +50,39 @@ public class JU_RedisLettuce
     
     
     @Test
+    public void test_XJava_GetAll()
+    {
+        IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");
+        
+        System.out.println("开始写入：" + Date.getNowTime().getFullMilli());
+        for (int x=1; x<=10; x++)
+        {
+            String v_ID  = "书名ID" + x;
+            Book v_Book = new Book(v_ID ,x * 1D ,new Date());
+            
+            v_RedisOpt.insert("图书馆" ,"科学类" ,v_ID ,v_Book);
+        }
+        System.out.println("写入完成：" + Date.getNowTime().getFullMilli());
+        
+        Help.print(v_RedisOpt.getRows("图书馆" ,"科学类"));
+        
+        System.out.println("读取完成：" + Date.getNowTime().getFullMilli());
+        
+        for (int x=1; x<=10; x++)
+        {
+            String v_ID  = "书名ID" + x;
+            v_RedisOpt.delete("图书馆" ,"科学类" ,v_ID);
+        }
+        System.out.println("删除完成：" + Date.getNowTime().getFullMilli());
+    }
+    
+    
+    
+    @Test
     public void test_XJava_Insert_Serializable_Object()
     {
         IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");
-        String v_ID       = "西北国棉二厂";
+        String v_ID       = "国棉二厂";
         School v_Row      = new School(v_ID ,32D ,new Date("1990-09-01"));
         
         v_RedisOpt.insert("学校" ,v_ID ,v_Row.getName() ,v_Row);
