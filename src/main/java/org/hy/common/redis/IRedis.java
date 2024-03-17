@@ -2,6 +2,8 @@ package org.hy.common.redis;
 
 import java.util.Map;
 
+import org.hy.common.TablePartitionRID;
+
 
 
 
@@ -18,6 +20,9 @@ import java.util.Map;
  *                      注：行主键默认为 "表名称.ID" 的形式
  * 
  * 概念2：关键字  Key   。Redis数据库中一个Key-Value的Key值。就是Map集合的Key值。
+ * 
+ * 注：行获取，一行数据是在Redis中用HSet命令存储的，即在获取时(get)，可用行主键直接获取，不用通过查库、查表、查主键后再获取。
+ * 注：行写入，因为表、主键关系，所以在Insert、Update一行数据时，要输入库、表名称。
  * 
  * @author      ZhengWei(HY)
  * @createDate  2024-03-15
@@ -146,7 +151,7 @@ public interface IRedis
     
     
     /**
-     * 插入一行中的一个字段的数据
+     * 插入一行数据
      * 
      * 注：表不存时，自动创建表、库关系等信息
      * 
@@ -260,157 +265,82 @@ public interface IRedis
     
     
     /**
-     * 插入一行或多行数据
+     * 获取一行数据
      * 
      * @author      ZhengWei(HY)
-     * @createDate  2024-03-15
+     * @createDate  2024-03-17
      * @version     v1.0
+     *
+     * @param i_PrimaryKey 行主键
+     * @param i_RowClass   行类型的元类
+     * @return             Map.key字段名，Map.value字段值
+     */
+    public Map<String ,String> getRow(String i_PrimaryKey);
+    
+    
+    
+    /**
+     * 获取一行数据
      * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-17
+     * @version     v1.0
+     *
+     * @param <E>          行类型
+     * @param i_PrimaryKey 行主键
+     * @param i_RowClass   行类型的元类
+     * @return
+     */
+    public <E> E getRow(String i_PrimaryKey ,Class<E> i_RowClass);
+    
+    
+    
+    /**
+     * 获取一行数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-17
+     * @version     v1.0
+     *
+     * @param <E>          行类型
+     * @param i_PrimaryKey 行主键
+     * @param io_RowObject 行对象
+     * @return
+     */
+    public <E> E getRow(String i_PrimaryKey ,E io_RowObject);
+    
+    
+    
+    /**
+     * 获取全表数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-17
+     * @version     v1.0
+     *
+     * @param i_Database   库名称
      * @param i_TableName  表名称
-     * @param i_RDatas     数据信息(相同行的多个字段信息的RData的getKey()为同一值)
-     * @return             按顺序返回行主键集合，其行主键的个数为实际行个数，而不i_RDatas.length的个数
+     * @param i_PrimaryKey 行主键
+     * @return             Map.key行主键，Map.Map.key字段名，Map.Map.value字段值
      */
-    //public List<String> inserts(String i_TableName ,RData ... i_RDatas);
+    public TablePartitionRID<String ,String> getRows(String i_Database ,String i_TableName);
     
     
     
     /**
-     * 插入一行或多行数据
+     * 获取全表数据
      * 
      * @author      ZhengWei(HY)
-     * @createDate  2024-03-15
+     * @createDate  2024-03-17
      * @version     v1.0
-     * 
+     *
+     * @param <E>          行类型
+     * @param i_Database   库名称
      * @param i_TableName  表名称
-     * @param i_RDatas     数据信息(相同行的多个字段信息的RData的getKey()为同一值)
-     * @return             按顺序返回行主键集合，其行主键的个数为实际行个数，而不i_RDatas.length的个数
+     * @param i_PrimaryKey 行主键
+     * @param i_RowClass   行类型的元类
+     * @return             Map.key行主键，Map.value行数据
      */
-    //public List<String> inserts(String i_TableName ,List<RData> i_RDatas);
-    
-    
-    
-    /**
-     * 修改一行中的一个字段的数据
-     * 
-     * @author      ZhengWei(HY)
-     * @createDate  2024-03-15
-     * @version     v1.0
-     * 
-     * @param i_TableName  表名称
-     * @param i_Key        对象ID
-     * @param i_Field      对象属性
-     * @param i_Value      对象值
-     * @return             返回行主键
-     */
-    //public String update(String i_TableName ,String i_Key ,String i_Field ,String i_Value);
-    
-    
-    
-    /**
-     * 修改一行中的一个字段的数据
-     * 
-     * @author      ZhengWei(HY)
-     * @createDate  2024-03-15
-     * @version     v1.0
-     * 
-     * @param i_TableName  表名称
-     * @param i_RData      数据信息
-     * @return             返回行主键
-     */
-    //public String update(String i_TableName ,RData i_RData);
-    
-    
-    
-    /**
-     * 修改一行或多行数据
-     * 
-     * @author      ZhengWei(HY)
-     * @createDate  2024-03-15
-     * @version     v1.0
-     * 
-     * @param i_TableName  表名称
-     * @param i_RDatas     数据信息(相同行的多个字段信息的RData的getKey()为同一值)
-     * @return             按顺序返回行主键集合，其行主键的个数为实际行个数，而不i_RDatas.length的个数
-     */
-    //public List<String> update(String i_TableName ,RData ... i_RDatas);
-    
-    
-    
-    /**
-     * 修改一行或多行数据
-     * 
-     * @author      ZhengWei(HY)
-     * @createDate  2024-03-15
-     * @version     v1.0
-     * 
-     * @param i_TableName  表名称
-     * @param i_RDatas     数据信息(相同行的多个字段信息的RData的getKey()为同一值)
-     * @return             按顺序返回行主键集合，其行主键的个数为实际行个数，而不i_RDatas.length的个数
-     */
-    //public List<String> update(String i_TableName ,List<RData> i_RDatas);
-    
-    
-    
-    /**
-     * 删除行
-     * 
-     * 如果整行数据都不存在，同时删除行信息
-     * 
-     * @author      ZhengWei(HY)
-     * @createDate  2024-03-15
-     * @version     v1.0
-     * 
-     * @param i_TableName  表名称
-     * @param i_Keys       对象ID--关键字。注意不是行主键
-     */
-    //public void delete(String i_TableName ,String ... i_Keys);
-    
-    
-    
-    /**
-     * 删除行
-     * 
-     * 如果整行数据都不存在，同时删除行信息
-     * 
-     * @author      ZhengWei(HY)
-     * @createDate  2024-03-15
-     * @version     v1.0
-     * 
-     * @param i_TableName  表名称
-     * @param i_Keys       对象ID--关键字。注意不是行主键
-     */
-    //public void delete(String i_TableName ,List<String> i_Keys);
-    
-    
-    
-    /**
-     * 删除字段。
-     * 
-     * 如果整行数据都不存在，同时删除行信息
-     * 
-     * @author      ZhengWei(HY)
-     * @createDate  2024-03-15
-     * @version     v1.0
-     * 
-     * @param i_TableName
-     * @param i_RDatas
-     */
-    //public void delete(String i_TableName ,RData ... i_RDatas);
-    
-    
-    
-    /**
-     * 删除字段。
-     * 
-     * 如果整行数据都不存在，同时删除行信息
-     * 
-     * @author      ZhengWei(HY)
-     * @createDate  2024-03-15
-     * @version     v1.0
-     * 
-     * @param i_TableName
-     * @param i_RDatas
-     */
-    //public void delete(String i_TableName ,List<RData> i_RDatas);
+    public <E> Map<String ,E> getRows(String i_Database ,String i_TableName ,Class<E> i_RowClass);
     
 }

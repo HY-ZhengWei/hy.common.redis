@@ -1,12 +1,18 @@
 package org.hy.common.redis.lettuce;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.hy.common.Date;
 import org.hy.common.Help;
+import org.hy.common.MethodReflect;
+import org.hy.common.TablePartitionRID;
 import org.hy.common.redis.IRedis;
 import org.hy.common.redis.RData;
 import org.hy.common.redis.cluster.RedisClusterConfig;
+import org.hy.common.xml.SerializableDef;
 import org.hy.common.xml.log.Logger;
 
 import io.lettuce.core.cluster.RedisClusterClient;
@@ -25,31 +31,29 @@ import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
  */
 public class RedisLettuce implements IRedis
 {
-    
-    private static final Logger $Logger = new Logger(RedisLettuce.class);
-    
-    
-    
+
+    private static final Logger                          $Logger = new Logger(RedisLettuce.class);
+
     private RedisClusterClient                           clusterClient;
-    
+
     private RedisAdvancedClusterCommands<String ,String> clusterCmd;
-    
-    
-    
+
+
+
     public RedisLettuce(RedisClusterConfig i_RedisClusterConfig)
     {
         this(i_RedisClusterConfig.toLettuce());
     }
-    
-    
-    
+
+
+
     public RedisLettuce(RedisClusterClient i_ClusterClient)
     {
         this.clusterClient = i_ClusterClient;
         
-        // 创建连接到 Redis 集群的连接
         try
         {
+            // 创建连接到 Redis 集群的连接
             this.clusterCmd = this.clusterClient.connect().sync();
         }
         catch (Exception exce)
@@ -58,18 +62,18 @@ public class RedisLettuce implements IRedis
             throw exce;
         }
     }
-    
-    
-    
+
+
+
     @Override
     protected void finalize() throws Throwable
     {
         this.clusterClient.shutdown();
         this.clusterClient = null;
     }
-    
-    
-    
+
+
+
     /**
      * 获取库的物理名称。即将逻辑名称转为真实保存在Redis的Key值
      * 
@@ -77,16 +81,16 @@ public class RedisLettuce implements IRedis
      * @createDate  2024-03-16
      * @version     v1.0
      *
-     * @param i_Database   库名称（逻辑名称）
-     * @return             表的物理名称
+     * @param i_Database  库名称（逻辑名称）
+     * @return            表的物理名称
      */
     private String getDatabaseID(String i_Database)
     {
         return $Object_Database + i_Database;
     }
-    
-    
-    
+
+
+
     /**
      * 获取表的物理名称。即将逻辑名称转为真实保存在Redis的Key值
      * 
@@ -107,6 +111,8 @@ public class RedisLettuce implements IRedis
 
     /**
      * 创建内存表
+     * 
+     *   注：库名称不存在时，自动创建
      * 
      * @author      ZhengWei(HY)
      * @createDate  2024-03-15
@@ -154,9 +160,9 @@ public class RedisLettuce implements IRedis
             return false;
         }
     }
-    
-    
-    
+
+
+
     /**
      * 表是否存在
      * 
@@ -174,31 +180,33 @@ public class RedisLettuce implements IRedis
         String v_TableID = this.getTableID(i_Database ,i_TableName);
         return this.isExists(v_TableID);
     }
-    
-    
-    
+
+
+
     /**
-     * 表是否在
+     * 表是否存在
      * 
      * @author      ZhengWei(HY)
-     * @createDate  2024-03-16
+     * @createDate  2024-03-15
      * @version     v1.0
      *
      * @param i_TableID  表的物理名称。即在Redis中保存的真实Key值
      * @return
      */
-    public boolean isExists(String i_TableID)
+    private boolean isExists(String i_TableID)
     {
         if ( this.clusterCmd.exists(i_TableID) >= 1L )
         {
             return true;
         }
-        
-        return false;
+        else
+        {
+            return false;
+        }
     }
-    
-    
-    
+
+
+
     /**
      * 删除内存表
      * 
@@ -216,7 +224,6 @@ public class RedisLettuce implements IRedis
         {
             return false;
         }
-        
         if ( Help.isNull(i_TableName) )
         {
             return false;
@@ -234,15 +241,14 @@ public class RedisLettuce implements IRedis
             return false;
         }
         
-        this.truncate(i_Database ,i_TableName);                 // 清空数据
-        this.clusterCmd.hdel(v_TableID ,"");                    // 删除 空主键
-        this.clusterCmd.del(v_TableID);                         // 删除表
-        
-        return this.clusterCmd.hdel(v_DBID ,v_TableID) >= 1L;   // 删除表库关系
+        this.truncate(i_Database ,i_TableName);               // 清空数据
+        this.clusterCmd.hdel(v_TableID ,"");                  // 删除 空主键
+        this.clusterCmd.del(v_TableID);                       // 删除表
+        return this.clusterCmd.hdel(v_DBID ,v_TableID) >= 1L; // 删除表库关系
     }
-    
-    
-    
+
+
+
     /**
      * 清空内存表数据
      * 
@@ -261,7 +267,6 @@ public class RedisLettuce implements IRedis
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_TableName) )
         {
             return -1L;
@@ -273,7 +278,7 @@ public class RedisLettuce implements IRedis
             return -1L;
         }
         
-        Map<String ,String> v_RowIDs  = this.clusterCmd.hgetall(v_TableID);
+        Map<String ,String> v_RowIDs = this.clusterCmd.hgetall(v_TableID);
         if ( Help.isNull(v_RowIDs) )
         {
             return 0L;
@@ -296,9 +301,9 @@ public class RedisLettuce implements IRedis
         
         return v_Count;
     }
-    
-    
-    
+
+
+
     /**
      * 删除一行记录
      * 
@@ -308,8 +313,8 @@ public class RedisLettuce implements IRedis
      *
      * @param i_Database    库名称
      * @param i_TableName   表名称
-     * @param i_PrimaryKey  主键
-     * @return
+     * @param i_PrimaryKey  行主键
+     * @return              返回影响的行数。负数表示异常
      */
     @Override
     public Long delete(String i_Database ,String i_TableName ,String i_PrimaryKey)
@@ -318,12 +323,10 @@ public class RedisLettuce implements IRedis
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_TableName) )
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_PrimaryKey) )
         {
             return -1L;
@@ -337,9 +340,9 @@ public class RedisLettuce implements IRedis
         
         return this.delete_Core(v_TableID ,i_PrimaryKey);
     }
-    
-    
-    
+
+
+
     /**
      * 删除一行记录
      * 
@@ -356,9 +359,9 @@ public class RedisLettuce implements IRedis
         this.clusterCmd.hdel(i_TableID ,i_PrimaryKey);
         return this.clusterCmd.del(i_PrimaryKey);
     }
-    
-    
-    
+
+
+
     /**
      * 插入一行中的一个字段的数据
      * 
@@ -382,17 +385,14 @@ public class RedisLettuce implements IRedis
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_TableName) )
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_PrimaryKey) )
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_Field) )
         {
             return -1L;
@@ -406,12 +406,11 @@ public class RedisLettuce implements IRedis
                 return -2L;
             }
         }
-        
         return this.insert_Core(v_TableID ,i_PrimaryKey ,i_Field ,i_Value);
     }
-    
-    
-    
+
+
+
     /**
      * 插入一行中的一个字段的数据
      * 
@@ -433,22 +432,18 @@ public class RedisLettuce implements IRedis
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_TableName) )
         {
             return -1L;
         }
-        
         if ( i_RData == null )
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_RData.getKey()) )
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_RData.getField()) )
         {
             return -1L;
@@ -462,12 +457,11 @@ public class RedisLettuce implements IRedis
                 return -2L;
             }
         }
-        
         return insert_Core(v_TableID ,i_RData.getKey() ,i_RData.getField() ,i_RData.getValue());
     }
-    
-    
-    
+
+
+
     /**
      * 插入一行数据
      * 
@@ -496,9 +490,9 @@ public class RedisLettuce implements IRedis
             return -9L;
         }
     }
-    
-    
-    
+
+
+
     /**
      * 插入一行数据
      * 
@@ -521,17 +515,14 @@ public class RedisLettuce implements IRedis
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_TableName) )
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_PrimaryKey) )
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_Datas) )
         {
             return -1L;
@@ -561,21 +552,21 @@ public class RedisLettuce implements IRedis
         
         return v_Count;
     }
-    
-    
-    
+
+
+
     /**
      * 插入一行中的一个字段的数据
      * 
-     * @author      ZhengWei(HY)
-     * @createDate  2024-03-16
-     * @version     v1.0
+     * @author     ZhengWei(HY)
+     * @createDate 2024-03-16
+     * @version    v1.0
      *
-     * @param i_TableID
-     * @param i_PrimaryKey 行主键
-     * @param i_Field      对象属性
-     * @param i_Value      对象值
-     * @return             返回影响的行数。负数表示异常
+     * @param i_TableID     表的物理名称。即在Redis中保存的真实Key值
+     * @param i_PrimaryKey  行主键
+     * @param i_Field       对象属性
+     * @param i_Value       对象值
+     * @return              返回影响的行数。负数表示异常
      */
     private Long insert_Core(String i_TableID ,String i_PrimaryKey ,String i_Field ,String i_Value)
     {
@@ -597,9 +588,9 @@ public class RedisLettuce implements IRedis
             return 0L;
         }
     }
-    
-    
-    
+
+
+
     /**
      * 更新一行中的一个字段的数据
      * 
@@ -623,22 +614,18 @@ public class RedisLettuce implements IRedis
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_TableName) )
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_PrimaryKey) )
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_Field) )
         {
             return -1L;
         }
-        
         String v_TableID = this.getTableID(i_Database ,i_TableName);
         if ( !this.isExists(v_TableID) )
         {
@@ -647,12 +634,11 @@ public class RedisLettuce implements IRedis
                 return -2L;
             }
         }
-        
         return this.update_Core(v_TableID ,i_PrimaryKey ,i_Field ,i_Value);
     }
-    
-    
-    
+
+
+
     /**
      * 更新一行中的一个字段的数据
      * 
@@ -674,27 +660,22 @@ public class RedisLettuce implements IRedis
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_TableName) )
         {
             return -1L;
         }
-        
         if ( i_RData == null )
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_RData.getKey()) )
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_RData.getField()) )
         {
             return -1L;
         }
-        
         String v_TableID = this.getTableID(i_Database ,i_TableName);
         if ( !this.isExists(v_TableID) )
         {
@@ -703,12 +684,11 @@ public class RedisLettuce implements IRedis
                 return -2L;
             }
         }
-        
         return update_Core(v_TableID ,i_RData.getKey() ,i_RData.getField() ,i_RData.getValue());
     }
-    
-    
-    
+
+
+
     /**
      * 更新一行数据
      * 
@@ -737,9 +717,9 @@ public class RedisLettuce implements IRedis
             return -9L;
         }
     }
-    
-    
-    
+
+
+
     /**
      * 更新一行数据
      * 
@@ -762,17 +742,14 @@ public class RedisLettuce implements IRedis
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_TableName) )
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_PrimaryKey) )
         {
             return -1L;
         }
-        
         if ( Help.isNull(i_Datas) )
         {
             return -1L;
@@ -802,30 +779,211 @@ public class RedisLettuce implements IRedis
         
         return v_Count;
     }
-    
-    
-    
+
+
+
     /**
      * 插入一行中的一个字段的数据
      * 
-     * @author      ZhengWei(HY)
-     * @createDate  2024-03-16
-     * @version     v1.0
+     * @author ZhengWei(HY)
+     * @createDate 2024-03-16
+     * @version v1.0
      *
-     * @param i_TableID
-     * @param i_PrimaryKey 行主键
-     * @param i_Field      对象属性
-     * @param i_Value      对象值
-     * @return             返回影响的行数。负数表示异常
+     * @param i_TableID     表的物理名称。即在Redis中保存的真实Key值
+     * @param i_PrimaryKey  行主键
+     * @param i_Field       对象属性
+     * @param i_Value       对象值
+     * @return              返回影响的行数。负数表示异常
      */
     private Long update_Core(String i_TableID ,String i_PrimaryKey ,String i_Field ,String i_Value)
     {
         // 表、主键关系
         this.clusterCmd.hsetnx(i_TableID ,i_PrimaryKey ,Date.getNowTime().getFull());
-            
         // 一行中的一个字段的数据
         this.clusterCmd.hset(i_PrimaryKey ,i_Field ,i_Value);
         return 1L;
+    }
+    
+    
+    
+    /**
+     * 获取一行数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-17
+     * @version     v1.0
+     *
+     * @param i_PrimaryKey 行主键
+     * @param i_RowClass   行类型的元类
+     * @return             Map.key字段名，Map.value字段值
+     */
+    @Override
+    public Map<String ,String> getRow(String i_PrimaryKey)
+    {
+        return this.clusterCmd.hgetall(i_PrimaryKey);
+    }
+
+
+
+    /**
+     * 获取一行数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-17
+     * @version     v1.0
+     *
+     * @param <E>          行类型
+     * @param i_PrimaryKey 行主键
+     * @param i_RowClass   行类型的元类
+     * @return
+     */
+    @Override
+    public <E> E getRow(String i_PrimaryKey ,Class<E> i_RowClass)
+    {
+        try
+        {
+            E v_RowObject = i_RowClass.getDeclaredConstructor().newInstance();
+            return this.getRow(i_PrimaryKey ,v_RowObject);
+        }
+        catch (Exception Exce)
+        {
+            $Logger.error(Exce);
+        }
+        return null;
+    }
+
+
+
+    /**
+     * 获取一行数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-17
+     * @version     v1.0
+     *
+     * @param <E>          行类型
+     * @param i_PrimaryKey 行主键
+     * @param io_RowObject 行对象
+     * @return
+     */
+    @Override
+    public <E> E getRow(String i_PrimaryKey ,E io_RowObject)
+    {
+        if ( io_RowObject == null )
+        {
+            return null;
+        }
+        
+        Map<String ,String> v_RowDatas = this.clusterCmd.hgetall(i_PrimaryKey);
+        
+        if ( io_RowObject instanceof SerializableDef )
+        {
+            ((SerializableDef) io_RowObject).initNotNull(v_RowDatas);
+        }
+        else
+        {
+            Map<String ,Method> v_SetMethods = MethodReflect.getSetMethodsMGByJava(io_RowObject.getClass());
+            
+            for (Map.Entry<String ,String> v_Item : v_RowDatas.entrySet())
+            {
+                Method v_SetMethod = v_SetMethods.get(v_Item.getKey());
+                if ( v_SetMethod == null )
+                {
+                    continue;
+                }
+                
+                Type     v_ParameterType  = v_SetMethod.getParameters()[0].getParameterizedType();
+                Class<?> v_ParameterClass = (Class<?>) v_ParameterType;
+                Object   v_ParameterValue = Help.toObject(v_ParameterClass ,v_Item.getValue());
+                
+                try
+                {
+                    v_SetMethod.invoke(io_RowObject ,v_ParameterValue);
+                }
+                catch (Exception exce)
+                {
+                    $Logger.error(exce);
+                }
+            }
+        }
+        
+        v_RowDatas.clear();
+        v_RowDatas = null;
+        return io_RowObject;
+    }
+    
+    
+    
+    /**
+     * 获取全表数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-17
+     * @version     v1.0
+     *
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @param i_PrimaryKey 行主键
+     * @return             Map.key行主键，Map.Map.key字段名，Map.Map.value字段值
+     */
+    @Override
+    public TablePartitionRID<String ,String> getRows(String i_Database ,String i_TableName)
+    {
+        TablePartitionRID<String ,String> v_Rows     = new TablePartitionRID<String ,String>();
+        String                            v_TableID  = this.getTableID(i_Database ,i_TableName);
+        Map<String ,String>               v_RowDatas = this.clusterCmd.hgetall(v_TableID);
+        
+        for (Map.Entry<String ,String> v_RowItem : v_RowDatas.entrySet())
+        {
+            Map<String ,String> v_RowObject = this.getRow(v_RowItem.getKey());
+            
+            if ( !Help.isNull(v_RowObject) )
+            {
+                v_Rows.putRows(v_RowItem.getKey() ,v_RowObject);
+            }
+        }
+        
+        v_RowDatas.clear();
+        v_RowDatas = null;
+        return v_Rows;
+    }
+    
+    
+    
+    /**
+     * 获取全表数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-17
+     * @version     v1.0
+     *
+     * @param <E>          行类型
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @param i_PrimaryKey 行主键
+     * @param i_RowClass   行类型的元类
+     * @return             Map.key行主键，Map.value行数据
+     */
+    @Override
+    public <E> Map<String ,E> getRows(String i_Database ,String i_TableName ,Class<E> i_RowClass)
+    {
+        Map<String ,E>      v_Rows     = new HashMap<String ,E>();
+        String              v_TableID  = this.getTableID(i_Database ,i_TableName);
+        Map<String ,String> v_RowDatas = this.clusterCmd.hgetall(v_TableID);
+        
+        for (Map.Entry<String ,String> v_RowItem : v_RowDatas.entrySet())
+        {
+            E v_RowObject = this.getRow(v_RowItem.getKey() ,i_RowClass);
+            
+            if ( v_RowObject != null )
+            {
+                v_Rows.put(v_RowItem.getKey() ,v_RowObject);
+            }
+        }
+        
+        v_RowDatas.clear();
+        v_RowDatas = null;
+        return v_Rows;
     }
     
 }
