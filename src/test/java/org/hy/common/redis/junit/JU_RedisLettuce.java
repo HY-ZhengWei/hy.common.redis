@@ -3,6 +3,8 @@ package org.hy.common.redis.junit;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hy.common.Date;
+import org.hy.common.Help;
 import org.hy.common.redis.IRedis;
 import org.hy.common.redis.cluster.RedisClusterConfig;
 import org.hy.common.xml.XJava;
@@ -48,18 +50,42 @@ public class JU_RedisLettuce
     
     
     @Test
+    public void test_XJava_Insert_Serializable_Object()
+    {
+        IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");
+        String v_ID       = "西北国棉二厂";
+        School v_Row      = new School(v_ID ,32D ,new Date("1990-09-01"));
+        
+        v_RedisOpt.insert("学校" ,v_ID ,v_Row.getName() ,v_Row);
+        Help.print(v_RedisOpt.getRow(v_ID));
+        
+        School v_New = v_RedisOpt.getRow(v_ID ,School.class);
+        System.out.println(v_New);
+    }
+    
+    
+    
+    @Test
+    public void test_XJava_Insert_Normal_Object()
+    {
+        IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");
+        Book   v_Row      = new Book("语文" ,10D ,new Date());
+        
+        v_RedisOpt.insert("图书馆" ,"书" ,v_Row.getName() ,v_Row);
+        Help.print(v_RedisOpt.getRow("语文"));
+        
+        Book v_New = v_RedisOpt.getRow("语文" ,Book.class);
+        System.out.println(v_New);
+    }
+    
+    
+    
+    @Test
     public void test_XJava_Get()
     {
         IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");
         
-        Long v_Ret = v_RedisOpt.insert("库名" ,"表名" ,"主键" ,"字段名" ,"字段值");
-        System.out.println("插入结果：" + v_Ret);
-        
-        v_Ret = v_RedisOpt.update("库名" ,"表名" ,"主键" ,"字段名" ,"字段值1");
-        System.out.println("更新结果：" + v_Ret);
-        
-        v_Ret = v_RedisOpt.update("库名" ,"表名" ,"主键" ,"字段名" ,"字段值2");
-        System.out.println("更新结果：" + v_Ret);
+        Help.print(v_RedisOpt.getRow("主键"));
     }
     
     

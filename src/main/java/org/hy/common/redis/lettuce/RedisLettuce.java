@@ -571,17 +571,12 @@ public class RedisLettuce implements IRedis
     private Long insert_Core(String i_TableID ,String i_PrimaryKey ,String i_Field ,String i_Value)
     {
         // 表、主键关系
-        if ( this.clusterCmd.hsetnx(i_TableID ,i_PrimaryKey ,Date.getNowTime().getFull()) )
+        this.clusterCmd.hsetnx(i_TableID ,i_PrimaryKey ,Date.getNowTime().getFull());
+        
+        // 一行中的一个字段的数据
+        if ( this.clusterCmd.hsetnx(i_PrimaryKey ,i_Field ,i_Value) )
         {
-            // 一行中的一个字段的数据
-            if ( this.clusterCmd.hsetnx(i_PrimaryKey ,i_Field ,i_Value) )
-            {
-                return 1L;
-            }
-            else
-            {
-                return 0L;
-            }
+            return 1L;
         }
         else
         {
@@ -882,11 +877,12 @@ public class RedisLettuce implements IRedis
         }
         else
         {
-            Map<String ,Method> v_SetMethods = MethodReflect.getSetMethodsMGByJava(io_RowObject.getClass());
+            Map<String ,Method> v_SetMethods = MethodReflect.getSetMethodsMG(io_RowObject.getClass());
             
             for (Map.Entry<String ,String> v_Item : v_RowDatas.entrySet())
             {
-                Method v_SetMethod = v_SetMethods.get(v_Item.getKey());
+                String v_MethodName = v_Item.getKey().substring(0 ,1).toUpperCase() + v_Item.getKey().substring(1);
+                Method v_SetMethod  = v_SetMethods.get(v_MethodName);
                 if ( v_SetMethod == null )
                 {
                     continue;
