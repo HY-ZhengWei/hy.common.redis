@@ -150,14 +150,14 @@ public class RedisLettuce implements IRedis
         String v_TableID = this.getTableID(   i_Database ,i_TableName);
         
         // 判定表对象是否存在
-        if ( this.clusterCmd.exists(v_TableID) >= 1L )
+        if ( this.isExistsTable_Core(v_TableID) )
         {
             String v_CreateTime = this.clusterCmd.hget(v_DBID ,v_TableID);
             $Logger.error("Table[" + v_TableID + "] exists ,it was created at " + v_CreateTime);
             return false;
         }
         
-        if ( this.clusterCmd.exists(v_DBID) <= 0L )
+        if ( !this.isExistsDatabase_Core(v_DBID) )
         {
             // 添加一个空主键，使用空字段实现预占用的创建库Hash对象
             // 不通过返回值判定，也不报错，提高容错性
@@ -179,50 +179,6 @@ public class RedisLettuce implements IRedis
         // 不通过返回值判定，也不报错，提高容错性
         this.clusterCmd.hsetnx(v_TableID ,"" ,v_Now);
         return true;
-    }
-
-
-
-    /**
-     * 表是否存在
-     * 
-     * @author      ZhengWei(HY)
-     * @createDate  2024-03-15
-     * @version     v1.0
-     *
-     * @param i_Database   库名称
-     * @param i_TableName  表名称
-     * @return
-     */
-    @Override
-    public boolean isExists(String i_Database ,String i_TableName)
-    {
-        String v_TableID = this.getTableID(i_Database ,i_TableName);
-        return this.isExists(v_TableID);
-    }
-
-
-
-    /**
-     * 表是否存在
-     * 
-     * @author      ZhengWei(HY)
-     * @createDate  2024-03-15
-     * @version     v1.0
-     *
-     * @param i_TableID  表的物理名称。即在Redis中保存的真实Key值
-     * @return
-     */
-    private boolean isExists(String i_TableID)
-    {
-        if ( this.clusterCmd.exists(i_TableID) >= 1L )
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
     }
 
 
@@ -250,13 +206,13 @@ public class RedisLettuce implements IRedis
         }
         
         String v_TableID = this.getTableID(i_Database ,i_TableName);
-        if ( !this.isExists(v_TableID) )
+        if ( !this.isExistsTable_Core(v_TableID) )
         {
             return false;
         }
         
         String v_DBID = this.getDatabaseID(i_Database);
-        if ( this.clusterCmd.exists(v_DBID) <= 0L )
+        if ( !this.isExistsDatabase_Core(v_DBID) )
         {
             return false;
         }
@@ -304,7 +260,12 @@ public class RedisLettuce implements IRedis
             return false;
         }
         
-        String              v_DBID   = this.getDatabaseID(i_Database);
+        String v_DBID = this.getDatabaseID(i_Database);
+        if ( !this.isExistsDatabase_Core(v_DBID) )
+        {
+            return false;
+        }
+        
         Map<String ,String> v_Tables = this.getRows(i_Database);
         if ( !Help.isNull(v_Tables) )
         {
@@ -346,7 +307,7 @@ public class RedisLettuce implements IRedis
         }
         
         String v_TableID = this.getTableID(i_Database ,i_TableName);
-        if ( !this.isExists(v_TableID) )
+        if ( !this.isExistsTable_Core(v_TableID) )
         {
             return -1L;
         }
@@ -423,7 +384,7 @@ public class RedisLettuce implements IRedis
         }
         
         String v_TableID = this.getTableID(i_Database ,i_TableName);
-        if ( !this.isExists(v_TableID) )
+        if ( !this.isExistsTable_Core(v_TableID) )
         {
             return -1L;
         }
@@ -464,8 +425,8 @@ public class RedisLettuce implements IRedis
      * @param i_Database   库名称
      * @param i_TableName  表名称
      * @param i_PrimaryKey 行主键
-     * @param i_Field      对象属性
-     * @param i_Value      对象值
+     * @param i_Field      行字段
+     * @param i_Value      行字段值
      * @return             返回影响的行数。负数表示异常
      */
     @Override
@@ -489,7 +450,7 @@ public class RedisLettuce implements IRedis
         }
         
         String v_TableID = this.getTableID(i_Database ,i_TableName);
-        if ( !this.isExists(v_TableID) )
+        if ( !this.isExistsTable_Core(v_TableID) )
         {
             if ( !this.createTable(i_Database ,i_TableName) )
             {
@@ -540,7 +501,7 @@ public class RedisLettuce implements IRedis
         }
         
         String v_TableID = this.getTableID(i_Database ,i_TableName);
-        if ( !this.isExists(v_TableID) )
+        if ( !this.isExistsTable_Core(v_TableID) )
         {
             if ( !this.createTable(i_Database ,i_TableName) )
             {
@@ -630,7 +591,7 @@ public class RedisLettuce implements IRedis
         }
         
         String v_TableID = this.getTableID(i_Database ,i_TableName);
-        if ( !this.isExists(v_TableID) )
+        if ( !this.isExistsTable_Core(v_TableID) )
         {
             if ( !this.createTable(i_Database ,i_TableName) )
             {
@@ -723,7 +684,7 @@ public class RedisLettuce implements IRedis
             return -1L;
         }
         String v_TableID = this.getTableID(i_Database ,i_TableName);
-        if ( !this.isExists(v_TableID) )
+        if ( !this.isExistsTable_Core(v_TableID) )
         {
             if ( !this.createTable(i_Database ,i_TableName) )
             {
@@ -773,7 +734,7 @@ public class RedisLettuce implements IRedis
             return -1L;
         }
         String v_TableID = this.getTableID(i_Database ,i_TableName);
-        if ( !this.isExists(v_TableID) )
+        if ( !this.isExistsTable_Core(v_TableID) )
         {
             if ( !this.createTable(i_Database ,i_TableName) )
             {
@@ -863,7 +824,7 @@ public class RedisLettuce implements IRedis
         }
         
         String v_TableID = this.getTableID(i_Database ,i_TableName);
-        if ( !this.isExists(v_TableID) )
+        if ( !this.isExistsTable_Core(v_TableID) )
         {
             if ( !this.createTable(i_Database ,i_TableName) )
             {
@@ -1396,6 +1357,216 @@ public class RedisLettuce implements IRedis
         {
             return new Date(v_Time);
         }
+    }
+    
+    
+    
+    /**
+     * 库是否存在
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @return
+     */
+    @Override
+    public boolean isExists(String i_Database)
+    {
+        if ( Help.isNull(i_Database) )
+        {
+            return false;
+        }
+        
+        String v_DBID = this.getDatabaseID(i_Database);
+        return this.isExistsDatabase_Core(v_DBID);
+    }
+    
+    
+    
+    /**
+     * 表是否存在
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-15
+     * @version     v1.0
+     *
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @return
+     */
+    @Override
+    public boolean isExists(String i_Database ,String i_TableName)
+    {
+        if ( Help.isNull(i_Database) )
+        {
+            return false;
+        }
+        
+        if ( Help.isNull(i_TableName) )
+        {
+            return false;
+        }
+        
+        String v_TableID = this.getTableID(i_Database ,i_TableName);
+        return this.isExistsTable_Core(v_TableID);
+    }
+    
+    
+    
+    /**
+     * 行主键是否存在
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_Database    库名称
+     * @param i_TableName   表名称
+     * @param i_PrimaryKey  行主键
+     * @return
+     */
+    @Override
+    public boolean isExists(String i_Database ,String i_TableName ,String i_PrimaryKey)
+    {
+        // 注：不用判定库名称是否为空，因为没有用到它
+        
+        if ( Help.isNull(i_TableName) )
+        {
+            return false;
+        }
+        
+        if ( Help.isNull(i_PrimaryKey) )
+        {
+            return false;
+        }
+        
+        return this.isExistsPrimaryKey_Core(i_PrimaryKey);
+    }
+    
+    
+    
+    /**
+     * 行字段是否存在
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_Database    库名称
+     * @param i_TableName   表名称
+     * @param i_PrimaryKey  行主键
+     * @param i_Field       行字段
+     * @return
+     */
+    @Override
+    public boolean isExists(String i_Database ,String i_TableName ,String i_PrimaryKey ,String i_Field)
+    {
+        // 注：不用判定库、表名称是否为空，因为没有用到它
+        
+        if ( Help.isNull(i_PrimaryKey) )
+        {
+            return false;
+        }
+        
+        if ( Help.isNull(i_Field) )
+        {
+            return false;
+        }
+        
+        return isExistsField_Core(i_PrimaryKey ,i_Field);
+    }
+    
+    
+    
+    /**
+     * 库是否存在
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_DBID  库的物理名称。即在Redis中保存的真实Key值
+     * @return
+     */
+    private boolean isExistsDatabase_Core(String i_DBID)
+    {
+        if ( this.clusterCmd.exists(i_DBID) >= 1L )
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+
+
+    /**
+     * 表是否存在
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-15
+     * @version     v1.0
+     *
+     * @param i_TableID  表的物理名称。即在Redis中保存的真实Key值
+     * @return
+     */
+    private boolean isExistsTable_Core(String i_TableID)
+    {
+        if ( this.clusterCmd.exists(i_TableID) >= 1L )
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    
+    
+    
+    /**
+     * 行主键是否存在
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-15
+     * @version     v1.0
+     *
+     * @param i_PrimaryKey  行主键
+     * @return
+     */
+    private boolean isExistsPrimaryKey_Core(String i_PrimaryKey)
+    {
+        if ( this.clusterCmd.exists(i_PrimaryKey) >= 1L )
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    
+    
+    
+    /**
+     * 行主键是否存在
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-15
+     * @version     v1.0
+     *
+     * @param i_PrimaryKey  行主键
+     * @param i_Field       行字段
+     * @return
+     */
+    private boolean isExistsField_Core(String i_PrimaryKey ,String i_Field)
+    {
+        return this.clusterCmd.hexists(i_PrimaryKey ,i_Field);
     }
     
 }

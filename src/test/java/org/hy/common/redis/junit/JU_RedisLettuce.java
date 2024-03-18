@@ -62,8 +62,14 @@ public class JU_RedisLettuce
             v_RedisOpt.insert("库" ,"表v1." + x ,v_PK ,"createTime" ,new Date().getFull());
         }
         
+        // 用两种方法查询全库中的表信息
         Help.print(v_RedisOpt.getRows("库"));
         Help.print(v_RedisOpt.getTables("库"));
+        
+        System.out.println("库名存在？" + v_RedisOpt.isExists("库"));
+        System.out.println("表名存在？" + v_RedisOpt.isExists("库" ,"表v1.2"));
+        System.out.println("主键存在？" + v_RedisOpt.isExists("库" ,"表v1.9" ,v_PK));
+        System.out.println("字段存在？" + v_RedisOpt.isExists("库" ,"表v1.9" ,v_PK ,"createTime"));
         
         System.out.println("库创建时间：" + v_RedisOpt.getCreateTime("库"));
         System.out.println("表创建时间：" + v_RedisOpt.getCreateTime("库" ,"表v1.1"));

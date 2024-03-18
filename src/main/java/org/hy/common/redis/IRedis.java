@@ -72,21 +72,6 @@ public interface IRedis
     
     
     /**
-     * 表是否存在
-     * 
-     * @author      ZhengWei(HY)
-     * @createDate  2024-03-15
-     * @version     v1.0
-     *
-     * @param i_Database   库名称
-     * @param i_TableName  表名称
-     * @return
-     */
-    public boolean isExists(String i_Database ,String i_TableName);
-    
-    
-    
-    /**
      * 删除内存表
      * 
      * @author      ZhengWei(HY)
@@ -157,8 +142,8 @@ public interface IRedis
      * @param i_Database   库名称
      * @param i_TableName  表名称
      * @param i_PrimaryKey 行主键
-     * @param i_Field      对象属性
-     * @param i_Value      对象值
+     * @param i_Field      行字段
+     * @param i_Value      行字段值
      * @return             返回影响的行数。负数表示异常
      */
     public Long insert(String i_Database ,String i_TableName ,String i_PrimaryKey ,String i_Field ,String i_Value);
@@ -466,5 +451,68 @@ public interface IRedis
      * @return
      */
     public Date getCreateTime(String i_Database ,String i_TableName ,String i_PrimaryKey);
+    
+    
+    
+    /**
+     * 库是否存在
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @return
+     */
+    public boolean isExists(String i_Database);
+    
+    
+    
+    /**
+     * 表是否存在
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-15
+     * @version     v1.0
+     *
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @return
+     */
+    public boolean isExists(String i_Database ,String i_TableName);
+    
+    
+    
+    /**
+     * 行主键是否存在
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_Database    库名称
+     * @param i_TableName   表名称
+     * @param i_PrimaryKey  行主键
+     * @return
+     */
+    public boolean isExists(String i_Database ,String i_TableName ,String i_PrimaryKey);
+    
+    
+    
+    /**
+     * 行字段是否存在
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_Database    库名称
+     * @param i_TableName   表名称
+     * @param i_PrimaryKey  行主键
+     * @param i_Field       行字段
+     * @return
+     */
+    public boolean isExists(String i_Database ,String i_TableName ,String i_PrimaryKey ,String i_Field);
     
 }
