@@ -1,7 +1,9 @@
 package org.hy.common.redis;
 
+import java.util.List;
 import java.util.Map;
 
+import org.hy.common.Date;
 import org.hy.common.TablePartitionRID;
 
 
@@ -313,6 +315,34 @@ public interface IRedis
     
     
     /**
+     * 获取全库所有的表数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_Database   库名称
+     * @return             Map.key行主键，Map.key表名称，Map.value表的创建时间
+     */
+    public Map<String ,Date> getTables(String i_Database);
+    
+    
+    
+    /**
+     * 获取全库所有的表数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_Database   库名称
+     * @return             Map.key行主键，Map.key表名称，Map.value表的创建时间
+     */
+    public Map<String ,String> getRows(String i_Database);
+    
+    
+    
+    /**
      * 获取全表数据
      * 
      * @author      ZhengWei(HY)
@@ -343,5 +373,23 @@ public interface IRedis
      * @return             Map.key行主键，Map.value行数据
      */
     public <E> Map<String ,E> getRows(String i_Database ,String i_TableName ,Class<E> i_RowClass);
+    
+    
+    
+    /**
+     * 获取全表数据（返回List集合）
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param <E>          行类型
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @param i_PrimaryKey 行主键
+     * @param i_RowClass   行类型的元类
+     * @return             Map.key行主键，Map.value行数据
+     */
+    public <E> List<E> getRowsList(String i_Database ,String i_TableName ,Class<E> i_RowClass);
     
 }

@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.hy.common.Date;
 import org.hy.common.Help;
+import org.hy.common.StringHelp;
 import org.hy.common.redis.IRedis;
 import org.hy.common.redis.cluster.RedisClusterConfig;
 import org.hy.common.xml.XJava;
@@ -44,6 +45,27 @@ public class JU_RedisLettuce
         {
             $isInit = true;
             XJava.parserAnnotation(this.getClass().getName());
+        }
+    }
+    
+    
+    
+    @Test
+    public void test_XJava_GetTables()
+    {
+        IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");
+        
+        for (int x=1; x<=9; x++)
+        {
+            v_RedisOpt.insert("库" ,"表v1." + x ,StringHelp.getUUID() ,"createTime" ,new Date().getFull());
+        }
+        
+        Help.print(v_RedisOpt.getRows("库"));
+        Help.print(v_RedisOpt.getTables("库"));
+        
+        for (int x=1; x<=9; x++)
+        {
+            v_RedisOpt.dropTable("库" ,"表v1." + x);
         }
     }
     

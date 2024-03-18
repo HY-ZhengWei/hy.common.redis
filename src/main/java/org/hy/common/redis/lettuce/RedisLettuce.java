@@ -2,7 +2,9 @@ package org.hy.common.redis.lettuce;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.hy.common.Date;
@@ -124,28 +126,35 @@ public class RedisLettuce implements IRedis
     @Override
     public synchronized boolean createTable(String i_Database ,String i_TableName)
     {
-        String v_TableID = this.getTableID(i_Database ,i_TableName);
-        if ( this.clusterCmd.exists(v_TableID) >= 1L )
-        {
-            $Logger.error("Table[" + v_TableID + "] exists.");
-            return false;
-        }
+        String v_DBID    = this.getDatabaseID(i_Database);
+        String v_TableID = this.getTableID(   i_Database ,i_TableName);
         
-        String v_DBID = this.getDatabaseID(i_Database);
-        if ( this.clusterCmd.exists(v_DBID) <= 0L )
-        {
-            if ( !this.clusterCmd.hsetnx(v_DBID ,v_TableID ,Date.getNowTime().getFull()) )
-            {
-                $Logger.error("An exception occurred while creating the Table[" + v_TableID + "] for MetaData.");
-                return false;
-            }
-        }
-        
+        // 判定表对象是否存在
         if ( this.clusterCmd.exists(v_TableID) >= 1L )
         {
             String v_CreateTime = this.clusterCmd.hget(v_DBID ,v_TableID);
             $Logger.error("Table[" + v_TableID + "] exists ,it was created at " + v_CreateTime);
             return false;
+        }
+        
+        if ( this.clusterCmd.exists(v_DBID) <= 0L )
+        {
+            // // 添加一个空主键，使用空字段实现预占用的创建库Hash对象
+            if ( this.clusterCmd.hset(v_DBID ,"" ,"") )
+            {
+                $Logger.error("An exception occurred while creating the Database[" + v_DBID + "].");
+                return false;
+            }
+        }
+        
+        // 判定表是否关系到库（不存在是创建关系，而不是报错，提高容错性）
+        if ( !this.clusterCmd.hexists(v_DBID ,v_TableID) )
+        {
+            if ( !this.clusterCmd.hset(v_DBID ,v_TableID ,Date.getNowTime().getFull()) )
+            {
+                $Logger.error("An exception occurred while creating the Table[" + v_TableID + "] for MetaData.");
+                return false;
+            }
         }
         
         // 添加一个空主键，使用空字段实现预占用的创建表Hash对象
@@ -815,6 +824,11 @@ public class RedisLettuce implements IRedis
     @Override
     public Map<String ,String> getRow(String i_PrimaryKey)
     {
+        if ( Help.isNull(i_PrimaryKey) )
+        {
+            return null;
+        }
+        
         return this.clusterCmd.hgetall(i_PrimaryKey);
     }
 
@@ -835,6 +849,16 @@ public class RedisLettuce implements IRedis
     @Override
     public <E> E getRow(String i_PrimaryKey ,Class<E> i_RowClass)
     {
+        if ( Help.isNull(i_PrimaryKey) )
+        {
+            return null;
+        }
+        
+        if ( i_RowClass == null )
+        {
+            return null;
+        }
+        
         try
         {
             E v_RowObject = i_RowClass.getDeclaredConstructor().newInstance();
@@ -864,6 +888,11 @@ public class RedisLettuce implements IRedis
     @Override
     public <E> E getRow(String i_PrimaryKey ,E io_RowObject)
     {
+        if ( Help.isNull(i_PrimaryKey) )
+        {
+            return null;
+        }
+        
         if ( io_RowObject == null )
         {
             return null;
@@ -871,7 +900,11 @@ public class RedisLettuce implements IRedis
         
         Map<String ,String> v_RowDatas = this.clusterCmd.hgetall(i_PrimaryKey);
         
-        if ( io_RowObject instanceof SerializableDef )
+        if ( Help.isNull(v_RowDatas) )
+        {
+            return io_RowObject;
+        }
+        else if ( io_RowObject instanceof SerializableDef )
         {
             ((SerializableDef) io_RowObject).initNotNull(v_RowDatas);
         }
@@ -911,6 +944,74 @@ public class RedisLettuce implements IRedis
     
     
     /**
+     * 获取全库所有的表数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_Database   库名称
+     * @return             Map.key行主键，Map.key表名称，Map.value表的创建时间
+     */
+    @Override
+    public Map<String ,Date> getTables(String i_Database)
+    {
+        if ( Help.isNull(i_Database) )
+        {
+            return null;
+        }
+        
+        Map<String ,Date>   v_Ret   = new HashMap<String ,Date>();
+        Map<String ,String> v_Datas = this.getRows(i_Database);
+        
+        if ( !Help.isNull(v_Datas) )
+        {
+            for (Map.Entry<String ,String> v_Item : v_Datas.entrySet())
+            {
+                v_Ret.put(v_Item.getKey() ,new Date(v_Item.getValue()));
+            }
+        }
+        
+        v_Datas.clear();
+        v_Datas = null;
+        return v_Ret;
+    }
+    
+    
+    
+    /**
+     * 获取全库所有的表数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_Database   库名称
+     * @return             Map.key行主键，Map.key表名称，Map.value表的创建时间
+     */
+    @Override
+    public Map<String ,String> getRows(String i_Database)
+    {
+        if ( Help.isNull(i_Database) )
+        {
+            return null;
+        }
+        
+        String v_DBID = this.getDatabaseID(i_Database);
+        Map<String ,String> v_Datas = this.clusterCmd.hgetall(v_DBID);
+        
+        if ( !Help.isNull(v_Datas) )
+        {
+            // 空主键是创建【库】时预留的
+            v_Datas.remove("");
+        }
+        
+        return v_Datas;
+    }
+    
+    
+    
+    /**
      * 获取全表数据
      * 
      * @author      ZhengWei(HY)
@@ -925,17 +1026,36 @@ public class RedisLettuce implements IRedis
     @Override
     public TablePartitionRID<String ,String> getRows(String i_Database ,String i_TableName)
     {
+        if ( Help.isNull(i_Database) )
+        {
+            return null;
+        }
+        
+        if ( Help.isNull(i_TableName) )
+        {
+            return null;
+        }
+        
         TablePartitionRID<String ,String> v_Rows     = new TablePartitionRID<String ,String>();
         String                            v_TableID  = this.getTableID(i_Database ,i_TableName);
         Map<String ,String>               v_RowDatas = this.clusterCmd.hgetall(v_TableID);
         
-        for (Map.Entry<String ,String> v_RowItem : v_RowDatas.entrySet())
+        if ( !Help.isNull(v_RowDatas) )
         {
-            Map<String ,String> v_RowObject = this.getRow(v_RowItem.getKey());
-            
-            if ( !Help.isNull(v_RowObject) )
+            for (Map.Entry<String ,String> v_RowItem : v_RowDatas.entrySet())
             {
-                v_Rows.putRows(v_RowItem.getKey() ,v_RowObject);
+                // 空主键是创建表时预留的
+                if ( Help.isNull(v_RowItem.getKey()) )
+                {
+                    continue;
+                }
+                
+                Map<String ,String> v_RowObject = this.getRow(v_RowItem.getKey());
+                
+                if ( !Help.isNull(v_RowObject) )
+                {
+                    v_Rows.putRows(v_RowItem.getKey() ,v_RowObject);
+                }
             }
         }
         
@@ -963,17 +1083,93 @@ public class RedisLettuce implements IRedis
     @Override
     public <E> Map<String ,E> getRows(String i_Database ,String i_TableName ,Class<E> i_RowClass)
     {
+        if ( Help.isNull(i_Database) )
+        {
+            return null;
+        }
+        
+        if ( Help.isNull(i_TableName) )
+        {
+            return null;
+        }
+        
         Map<String ,E>      v_Rows     = new HashMap<String ,E>();
         String              v_TableID  = this.getTableID(i_Database ,i_TableName);
         Map<String ,String> v_RowDatas = this.clusterCmd.hgetall(v_TableID);
         
-        for (Map.Entry<String ,String> v_RowItem : v_RowDatas.entrySet())
+        if ( !Help.isNull(v_RowDatas) )
         {
-            E v_RowObject = this.getRow(v_RowItem.getKey() ,i_RowClass);
-            
-            if ( v_RowObject != null )
+            for (Map.Entry<String ,String> v_RowItem : v_RowDatas.entrySet())
             {
-                v_Rows.put(v_RowItem.getKey() ,v_RowObject);
+                // 空主键是创建表时预留的
+                if ( Help.isNull(v_RowItem.getKey()) )
+                {
+                    continue;
+                }
+                
+                E v_RowObject = this.getRow(v_RowItem.getKey() ,i_RowClass);
+                
+                if ( v_RowObject != null )
+                {
+                    v_Rows.put(v_RowItem.getKey() ,v_RowObject);
+                }
+            }
+        }
+        
+        v_RowDatas.clear();
+        v_RowDatas = null;
+        return v_Rows;
+    }
+    
+    
+    
+    /**
+     * 获取全表数据（返回List集合）
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param <E>          行类型
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @param i_PrimaryKey 行主键
+     * @param i_RowClass   行类型的元类
+     * @return             Map.key行主键，Map.value行数据
+     */
+    @Override
+    public <E> List<E> getRowsList(String i_Database ,String i_TableName ,Class<E> i_RowClass)
+    {
+        if ( Help.isNull(i_Database) )
+        {
+            return null;
+        }
+        
+        if ( Help.isNull(i_TableName) )
+        {
+            return null;
+        }
+        
+        List<E>             v_Rows     = new ArrayList<E>();
+        String              v_TableID  = this.getTableID(i_Database ,i_TableName);
+        Map<String ,String> v_RowDatas = this.clusterCmd.hgetall(v_TableID);
+        
+        if ( !Help.isNull(v_RowDatas) )
+        {
+            for (Map.Entry<String ,String> v_RowItem : v_RowDatas.entrySet())
+            {
+                // 空主键是创建表时预留的
+                if ( Help.isNull(v_RowItem.getKey()) )
+                {
+                    continue;
+                }
+                
+                E v_RowObject = this.getRow(v_RowItem.getKey() ,i_RowClass);
+                
+                if ( v_RowObject != null )
+                {
+                    v_Rows.add(v_RowObject);
+                }
             }
         }
         
