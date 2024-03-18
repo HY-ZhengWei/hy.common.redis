@@ -85,6 +85,20 @@ public interface IRedis
     
     
     /**
+     * 删除整个数据库
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_Database  库名称
+     * @return
+     */
+    public boolean dropDatabase(String i_Database);
+    
+    
+    
+    /**
      * 清空内存表数据
      * 
      * @author      ZhengWei(HY)

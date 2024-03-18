@@ -140,7 +140,7 @@ public class RedisLettuce implements IRedis
         if ( this.clusterCmd.exists(v_DBID) <= 0L )
         {
             // // 添加一个空主键，使用空字段实现预占用的创建库Hash对象
-            if ( this.clusterCmd.hset(v_DBID ,"" ,"") )
+            if ( this.clusterCmd.hset(v_DBID ,"" ,new Date().getFull()) )
             {
                 $Logger.error("An exception occurred while creating the Database[" + v_DBID + "].");
                 return false;
@@ -148,9 +148,10 @@ public class RedisLettuce implements IRedis
         }
         
         // 判定表是否关系到库（不存在是创建关系，而不是报错，提高容错性）
+        String v_Now = Date.getNowTime().getFull();
         if ( !this.clusterCmd.hexists(v_DBID ,v_TableID) )
         {
-            if ( !this.clusterCmd.hset(v_DBID ,v_TableID ,Date.getNowTime().getFull()) )
+            if ( !this.clusterCmd.hset(v_DBID ,v_TableID ,v_Now) )
             {
                 $Logger.error("An exception occurred while creating the Table[" + v_TableID + "] for MetaData.");
                 return false;
@@ -158,7 +159,7 @@ public class RedisLettuce implements IRedis
         }
         
         // 添加一个空主键，使用空字段实现预占用的创建表Hash对象
-        if ( this.clusterCmd.hset(v_TableID ,"" ,"") )
+        if ( this.clusterCmd.hset(v_TableID ,"" ,v_Now) )
         {
             return true;
         }
@@ -250,10 +251,63 @@ public class RedisLettuce implements IRedis
             return false;
         }
         
-        this.truncate(i_Database ,i_TableName);               // 清空数据
-        this.clusterCmd.hdel(v_TableID ,"");                  // 删除 空主键
-        this.clusterCmd.del(v_TableID);                       // 删除表
-        return this.clusterCmd.hdel(v_DBID ,v_TableID) >= 1L; // 删除表库关系
+        return this.dropTable_Core(v_DBID ,v_TableID);
+    }
+    
+    
+    
+    /**
+     * 删除内存表
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-15
+     * @version     v1.0
+     *
+     * @param i_DBID     库的物理名称。即在Redis中保存的真实Key值
+     * @param i_TableID  表的物理名称。即在Redis中保存的真实Key值
+     */
+    private boolean dropTable_Core(String i_DBID ,String i_TableID)
+    {
+        this.truncate_Core(i_TableID);                        // 清空数据
+        this.clusterCmd.hdel(i_TableID ,"");                  // 删除 空主键
+        this.clusterCmd.del(i_TableID);                       // 删除表
+        return this.clusterCmd.hdel(i_DBID ,i_TableID) >= 1L; // 删除表库关系
+    }
+    
+    
+    
+    /**
+     * 删除整个数据库
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_Database  库名称
+     * @return
+     */
+    @Override
+    public boolean dropDatabase(String i_Database)
+    {
+        if ( Help.isNull(i_Database) )
+        {
+            return false;
+        }
+        
+        String              v_DBID   = this.getDatabaseID(i_Database);
+        Map<String ,String> v_Tables = this.getRows(i_Database);
+        if ( !Help.isNull(v_Tables) )
+        {
+            for (String v_TableID : v_Tables.keySet())
+            {
+                if ( !dropTable_Core(v_DBID ,v_TableID) )
+                {
+                    return false;
+                }
+            }
+        }
+        
+        return this.clusterCmd.del(v_DBID) >= 1L;
     }
 
 
@@ -287,7 +341,24 @@ public class RedisLettuce implements IRedis
             return -1L;
         }
         
-        Map<String ,String> v_RowIDs = this.clusterCmd.hgetall(v_TableID);
+        return truncate_Core(v_TableID);
+    }
+    
+    
+    
+    /**
+     * 清空内存表数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-15
+     * @version     v1.0
+     *
+     * @param i_TableID  表的物理名称。即在Redis中保存的真实Key值
+     * @return             返回影响的行数。负数表示异常
+     */
+    private Long truncate_Core(String i_TableID)
+    {
+        Map<String ,String> v_RowIDs = this.clusterCmd.hgetall(i_TableID);
         if ( Help.isNull(v_RowIDs) )
         {
             return 0L;
@@ -301,7 +372,7 @@ public class RedisLettuce implements IRedis
                 continue;
             }
             
-            Long v_DelRet = this.delete_Core(v_TableID ,v_RowID);
+            Long v_DelRet = this.delete_Core(i_TableID ,v_RowID);
             if ( v_DelRet >= 0L )
             {
                 v_Count += v_DelRet;

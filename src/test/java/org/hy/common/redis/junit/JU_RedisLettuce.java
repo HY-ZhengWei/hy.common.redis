@@ -63,10 +63,7 @@ public class JU_RedisLettuce
         Help.print(v_RedisOpt.getRows("库"));
         Help.print(v_RedisOpt.getTables("库"));
         
-        for (int x=1; x<=9; x++)
-        {
-            v_RedisOpt.dropTable("库" ,"表v1." + x);
-        }
+        v_RedisOpt.dropDatabase("库");
     }
     
     
