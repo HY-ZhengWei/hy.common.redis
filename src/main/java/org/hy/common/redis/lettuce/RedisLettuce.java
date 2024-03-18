@@ -560,6 +560,17 @@ public class RedisLettuce implements IRedis
     @Override
     public Long insert(String i_Database ,String i_TableName ,String i_PrimaryKey ,Object i_Datas)
     {
+        if ( i_Datas == null )
+        {
+            return -1L;
+        }
+        
+        // 基础类型无法按一行数据写入
+        if ( Help.isBasicDataType(i_Datas.getClass()) )
+        {
+            return -8L;
+        }
+        
         try
         {
             return insert(i_Database ,i_TableName ,i_PrimaryKey ,Help.toMap(i_Datas));
@@ -782,6 +793,17 @@ public class RedisLettuce implements IRedis
     @Override
     public Long update(String i_Database ,String i_TableName ,String i_PrimaryKey ,Object i_Datas)
     {
+        if ( i_Datas == null )
+        {
+            return -1L;
+        }
+        
+        // 基础类型无法按一行数据写入
+        if ( Help.isBasicDataType(i_Datas.getClass()) )
+        {
+            return -8L;
+        }
+        
         try
         {
             return update(i_Database ,i_TableName ,i_PrimaryKey ,Help.toMap(i_Datas));
