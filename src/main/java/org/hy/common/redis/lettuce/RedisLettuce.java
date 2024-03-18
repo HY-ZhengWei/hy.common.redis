@@ -73,6 +73,26 @@ public class RedisLettuce implements IRedis
         this.clusterClient.shutdown();
         this.clusterClient = null;
     }
+    
+    
+    
+    /**
+     * 获取Redis真实操作的原始对象。方便对外界提供更多的基础功能
+     * 
+     * 如 Lettuce 返回 RedisAdvancedClusterCommands<String ,String> 对象
+     * 如 Jedis   返回 ShardedJedis 对象
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @return
+     */
+    @Override
+    public Object getSource()
+    {
+        return this.clusterCmd;
+    }
 
 
 
@@ -139,12 +159,9 @@ public class RedisLettuce implements IRedis
         
         if ( this.clusterCmd.exists(v_DBID) <= 0L )
         {
-            // // 添加一个空主键，使用空字段实现预占用的创建库Hash对象
-            if ( this.clusterCmd.hset(v_DBID ,"" ,new Date().getFull()) )
-            {
-                $Logger.error("An exception occurred while creating the Database[" + v_DBID + "].");
-                return false;
-            }
+            // 添加一个空主键，使用空字段实现预占用的创建库Hash对象
+            // 不通过返回值判定，也不报错，提高容错性
+            this.clusterCmd.hsetnx(v_DBID ,"" ,new Date().getFull());
         }
         
         // 判定表是否关系到库（不存在是创建关系，而不是报错，提高容错性）
@@ -159,16 +176,9 @@ public class RedisLettuce implements IRedis
         }
         
         // 添加一个空主键，使用空字段实现预占用的创建表Hash对象
-        if ( this.clusterCmd.hset(v_TableID ,"" ,v_Now) )
-        {
-            return true;
-        }
-        else
-        {
-            $Logger.error("An exception occurred while creating the Table[" + v_TableID + "].");
-            this.clusterCmd.hdel(v_DBID ,v_TableID);
-            return false;
-        }
+        // 不通过返回值判定，也不报错，提高容错性
+        this.clusterCmd.hsetnx(v_TableID ,"" ,v_Now);
+        return true;
     }
 
 
@@ -1269,6 +1279,123 @@ public class RedisLettuce implements IRedis
         v_RowDatas.clear();
         v_RowDatas = null;
         return v_Rows;
+    }
+    
+    
+    
+    /**
+     * 获取数据库的创建时间
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_Database  库名称
+     * @return
+     */
+    @Override
+    public Date getCreateTime(String i_Database)
+    {
+        if ( Help.isNull(i_Database) )
+        {
+            return null;
+        }
+        
+        String v_DBID = this.getDatabaseID(i_Database);
+        String v_Time = this.clusterCmd.hget(v_DBID ,"");
+        
+        if ( v_Time == null )
+        {
+            return null;
+        }
+        else
+        {
+            return new Date(v_Time);
+        }
+    }
+    
+    
+    
+    /**
+     * 获取表的创建时间
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @return
+     */
+    @Override
+    public Date getCreateTime(String i_Database ,String i_TableName)
+    {
+        if ( Help.isNull(i_Database) )
+        {
+            return null;
+        }
+        
+        if ( Help.isNull(i_TableName) )
+        {
+            return null;
+        }
+        
+        String v_TableID = this.getTableID(i_Database ,i_TableName);
+        String v_Time = this.clusterCmd.hget(v_TableID ,"");
+        
+        if ( v_Time == null )
+        {
+            return null;
+        }
+        else
+        {
+            return new Date(v_Time);
+        }
+    }
+    
+    
+    
+    /**
+     * 获取行记录的创建时间
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @param i_PrimaryKey 行主键
+     * @return
+     */
+    @Override
+    public Date getCreateTime(String i_Database ,String i_TableName ,String i_PrimaryKey)
+    {
+        if ( Help.isNull(i_Database) )
+        {
+            return null;
+        }
+        
+        if ( Help.isNull(i_TableName) )
+        {
+            return null;
+        }
+        
+        if ( Help.isNull(i_PrimaryKey) )
+        {
+            return null;
+        }
+        
+        String v_TableID = this.getTableID(i_Database ,i_TableName);
+        String v_Time = this.clusterCmd.hget(v_TableID ,i_PrimaryKey);
+        
+        if ( v_Time == null )
+        {
+            return null;
+        }
+        else
+        {
+            return new Date(v_Time);
+        }
     }
     
 }

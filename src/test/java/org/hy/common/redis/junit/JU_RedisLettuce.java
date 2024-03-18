@@ -54,14 +54,20 @@ public class JU_RedisLettuce
     public void test_XJava_GetTables()
     {
         IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");
+        String v_PK       = "";
         
         for (int x=1; x<=9; x++)
         {
-            v_RedisOpt.insert("库" ,"表v1." + x ,StringHelp.getUUID() ,"createTime" ,new Date().getFull());
+            v_PK = StringHelp.getUUID();
+            v_RedisOpt.insert("库" ,"表v1." + x ,v_PK ,"createTime" ,new Date().getFull());
         }
         
         Help.print(v_RedisOpt.getRows("库"));
         Help.print(v_RedisOpt.getTables("库"));
+        
+        System.out.println("库创建时间：" + v_RedisOpt.getCreateTime("库"));
+        System.out.println("表创建时间：" + v_RedisOpt.getCreateTime("库" ,"表v1.1"));
+        System.out.println("行创建时间：" + v_RedisOpt.getCreateTime("库" ,"表v1.9" ,v_PK));
         
         v_RedisOpt.dropDatabase("库");
     }

@@ -40,6 +40,22 @@ public interface IRedis
     
     
     /**
+     * 获取Redis真实操作的原始对象。方便对外界提供更多的基础功能
+     * 
+     * 如 Lettuce 返回 RedisAdvancedClusterCommands<String ,String> 对象
+     * 如 Jedis   返回 ShardedJedis 对象
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @return
+     */
+    public Object getSource();
+    
+    
+    
+    /**
      * 创建内存表
      * 
      *   注：库名称不存在时，自动创建
@@ -405,5 +421,50 @@ public interface IRedis
      * @return             Map.key行主键，Map.value行数据
      */
     public <E> List<E> getRowsList(String i_Database ,String i_TableName ,Class<E> i_RowClass);
+    
+    
+    
+    /**
+     * 获取数据库的创建时间
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_Database  库名称
+     * @return
+     */
+    public Date getCreateTime(String i_Database);
+    
+    
+    
+    /**
+     * 获取表的创建时间
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @return
+     */
+    public Date getCreateTime(String i_Database ,String i_TableName);
+    
+    
+    
+    /**
+     * 获取行记录的创建时间
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-18
+     * @version     v1.0
+     *
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @param i_PrimaryKey 行主键
+     * @return
+     */
+    public Date getCreateTime(String i_Database ,String i_TableName ,String i_PrimaryKey);
     
 }
