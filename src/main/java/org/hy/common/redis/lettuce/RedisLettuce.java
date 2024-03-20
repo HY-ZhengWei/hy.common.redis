@@ -652,6 +652,7 @@ public class RedisLettuce implements IRedis
      * 更新一行中的一个字段的数据
      * 
      * 注：表不存时，自动创建表、库关系等信息
+     * 注：当行数据不存时：在Redis创建行数据，即有 insert() 方法的能力
      * 
      * @author      ZhengWei(HY)
      * @createDate  2024-03-16
@@ -661,7 +662,7 @@ public class RedisLettuce implements IRedis
      * @param i_TableName  表名称
      * @param i_PrimaryKey 行主键
      * @param i_Field      对象属性
-     * @param i_Value      对象值
+     * @param i_Value      对象值。当为 null 时，将执行Redis删除命令
      * @return             返回影响的行数。负数表示异常
      */
     @Override
@@ -700,6 +701,7 @@ public class RedisLettuce implements IRedis
      * 更新一行中的一个字段的数据
      * 
      * 注：表不存时，自动创建表、库关系等信息
+     * 注：当行数据不存时：在Redis创建行数据，即有 insert() 方法的能力
      * 
      * @author      ZhengWei(HY)
      * @createDate  2024-03-16
@@ -707,7 +709,7 @@ public class RedisLettuce implements IRedis
      * 
      * @param i_Database   库名称
      * @param i_TableName  表名称
-     * @param i_RData      数据信息
+     * @param i_RData      数据信息。当属性值为 null 时，将执行Redis删除命令
      * @return             返回影响的行数。负数表示异常
      */
     @Override
@@ -750,6 +752,7 @@ public class RedisLettuce implements IRedis
      * 更新一行数据
      * 
      * 注：表不存时，自动创建表、库关系等信息
+     * 注：当行数据不存时：在Redis创建行数据，即有 insert() 方法的能力
      * 
      * @author      ZhengWei(HY)
      * @createDate  2024-03-16
@@ -758,11 +761,37 @@ public class RedisLettuce implements IRedis
      * @param i_Database   库名称
      * @param i_TableName  表名称
      * @param i_PrimaryKey 行主键
-     * @param i_Datas      数据信息
+     * @param i_Datas      数据信息。对象成员属性为 null 时，当 i_HaveNullValue 为假时，对象成员属性不参与更新
      * @return             返回影响的行数。负数表示异常
      */
     @Override
     public Long update(String i_Database ,String i_TableName ,String i_PrimaryKey ,Object i_Datas)
+    {
+        return this.update(i_Database ,i_TableName ,i_PrimaryKey ,i_Datas ,false);
+    }
+    
+    
+    
+    /**
+     * 更新一行数据
+     * 
+     * 注：表不存时，自动创建表、库关系等信息
+     * 注：当行数据不存时：在Redis创建行数据，即有 insert() 方法的能力
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-16
+     * @version     v1.0
+     * 
+     * @param i_Database       库名称
+     * @param i_TableName      表名称
+     * @param i_PrimaryKey     行主键
+     * @param i_Datas          数据信息。对象成员属性为 null 时，当 i_HaveNullValue 为假时，对象成员属性不参与更新
+     *                                  对象成员属性为 null 时，当 i_HaveNullValue 为真时，对象成员属性将从Redis中删除
+     * @param i_HaveNullValue  是否包含对象属性值为null的元素
+     * @return                 返回影响的行数。负数表示异常
+     */
+    @Override
+    public Long update(String i_Database ,String i_TableName ,String i_PrimaryKey ,Object i_Datas ,boolean i_HaveNullValue)
     {
         if ( i_Datas == null )
         {
@@ -777,7 +806,7 @@ public class RedisLettuce implements IRedis
         
         try
         {
-            return update(i_Database ,i_TableName ,i_PrimaryKey ,Help.toMap(i_Datas));
+            return update(i_Database ,i_TableName ,i_PrimaryKey ,Help.toMap(i_Datas ,null ,i_HaveNullValue ,false));
         }
         catch (Exception exce)
         {
@@ -792,6 +821,7 @@ public class RedisLettuce implements IRedis
      * 更新一行数据
      * 
      * 注：表不存时，自动创建表、库关系等信息
+     * 注：当行数据不存时：在Redis创建行数据，即有 insert() 方法的能力
      * 
      * @author      ZhengWei(HY)
      * @createDate  2024-03-16
@@ -800,7 +830,7 @@ public class RedisLettuce implements IRedis
      * @param i_Database   库名称
      * @param i_TableName  表名称
      * @param i_PrimaryKey 行主键
-     * @param i_Datas      数据信息
+     * @param i_Datas      数据信息。当为 Map.value 为 null 时，将执行Redis删除命令
      * @return             返回影响的行数。负数表示异常
      */
     @Override
@@ -851,7 +881,9 @@ public class RedisLettuce implements IRedis
 
 
     /**
-     * 插入一行中的一个字段的数据
+     * 更新一行中的一个字段的数据
+     * 
+     * 注：当行数据不存时：在Redis创建行数据，即有 insert() 方法的能力
      * 
      * @author ZhengWei(HY)
      * @createDate 2024-03-16
@@ -860,16 +892,142 @@ public class RedisLettuce implements IRedis
      * @param i_TableID     表的物理名称。即在Redis中保存的真实Key值
      * @param i_PrimaryKey  行主键
      * @param i_Field       对象属性
-     * @param i_Value       对象值
+     * @param i_Value       对象值。当为 null 时，将执行Redis删除命令
      * @return              返回影响的行数。负数表示异常
      */
     private Long update_Core(String i_TableID ,String i_PrimaryKey ,String i_Field ,String i_Value)
     {
         // 表、主键关系
         this.clusterCmd.hsetnx(i_TableID ,i_PrimaryKey ,Date.getNowTime().getFull());
-        // 一行中的一个字段的数据
-        this.clusterCmd.hset(i_PrimaryKey ,i_Field ,i_Value);
+        
+        if ( i_Value == null )
+        {
+            // 一行中的一个字段被删除
+            this.clusterCmd.hdel(i_PrimaryKey ,i_Field);
+        }
+        else
+        {
+            // 一行中的一个字段的数据
+            this.clusterCmd.hset(i_PrimaryKey ,i_Field ,i_Value);
+        }
         return 1L;
+    }
+    
+    
+    
+    /**
+     * 保存一行中的一个字段的数据（数据不存时：创建。数据存时：更新或删除）
+     * 
+     * 注：表不存时，自动创建表、库关系等信息
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-20
+     * @version     v1.0
+     * 
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @param i_PrimaryKey 行主键
+     * @param i_Field      对象属性
+     * @param i_Value      对象值。当为 null 时，将执行Redis删除命令
+     * @return             返回影响的行数。负数表示异常
+     */
+    @Override
+    public Long save(String i_Database ,String i_TableName ,String i_PrimaryKey ,String i_Field ,String i_Value)
+    {
+        return this.update(i_Database ,i_TableName ,i_PrimaryKey ,i_Field ,i_Value);
+    }
+    
+    
+    
+    /**
+     * 保存一行中的一个字段的数据（数据不存时：创建。数据存时：更新或删除）
+     * 
+     * 注：表不存时，自动创建表、库关系等信息
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-20
+     * @version     v1.0
+     * 
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @param i_RData      数据信息。当属性值为 null 时，将执行Redis删除命令
+     * @return             返回影响的行数。负数表示异常
+     */
+    @Override
+    public Long save(String i_Database ,String i_TableName ,RData i_RData)
+    {
+        return this.update(i_Database ,i_TableName ,i_RData);
+    }
+    
+    
+    
+    /**
+     * 保存一行数据（数据不存时：创建。数据存时：更新或删除）
+     * 
+     * 注：表不存时，自动创建表、库关系等信息
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-20
+     * @version     v1.0
+     * 
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @param i_PrimaryKey 行主键
+     * @param i_Datas      数据信息。对象成员属性为 null 时，当 i_HaveNullValue 为假时，对象成员属性不参与更新
+     * @return             返回影响的行数。负数表示异常
+     */
+    @Override
+    public Long save(String i_Database ,String i_TableName ,String i_PrimaryKey ,Object i_Datas)
+    {
+        return this.update(i_Database ,i_TableName ,i_PrimaryKey ,i_Datas);
+    }
+    
+    
+    
+    /**
+     * 保存一行数据（数据不存时：创建。数据存时：更新或删除）
+     * 
+     * 注：表不存时，自动创建表、库关系等信息
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-20
+     * @version     v1.0
+     * 
+     * @param i_Database       库名称
+     * @param i_TableName      表名称
+     * @param i_PrimaryKey     行主键
+     * @param i_Datas          数据信息。对象成员属性为 null 时，当 i_HaveNullValue 为假时，对象成员属性不参与更新
+     *                                  对象成员属性为 null 时，当 i_HaveNullValue 为真时，对象成员属性将从Redis中删除
+     * @param i_HaveNullValue  是否包含对象属性值为null的元素
+     * @return                 返回影响的行数。负数表示异常
+     */
+    @Override
+    public Long save(String i_Database ,String i_TableName ,String i_PrimaryKey ,Object i_Datas ,boolean i_HaveNullValue)
+    {
+        return this.update(i_Database ,i_TableName ,i_PrimaryKey ,i_Datas ,i_HaveNullValue);
+    }
+    
+    
+    
+    /**
+     * 保存一行数据（数据不存时：创建。数据存时：更新或删除）
+     * 
+     * 注：表不存时，自动创建表、库关系等信息
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-20
+     * @version     v1.0
+     * 
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @param i_PrimaryKey 行主键
+     * @param i_Datas      数据信息。当为 Map.value 为 null 时，将执行Redis删除命令
+     * @return             返回影响的行数。负数表示异常
+     */
+    @Override
+    public Long save(String i_Database ,String i_TableName ,String i_PrimaryKey ,Map<String ,Object> i_Datas)
+    {
+        return this.update(i_Database ,i_TableName ,i_PrimaryKey ,i_Datas);
     }
     
     
@@ -987,10 +1145,25 @@ public class RedisLettuce implements IRedis
                 
                 Type     v_ParameterType  = v_SetMethod.getParameters()[0].getParameterizedType();
                 Class<?> v_ParameterClass = (Class<?>) v_ParameterType;
-                Object   v_ParameterValue = Help.toObject(v_ParameterClass ,v_Item.getValue());
+                Object   v_ParameterValue = null;
                 
                 try
                 {
+                    if ( v_Item.getValue() != null )
+                    {
+                        if ( "".equals(v_Item.getValue().trim()) )
+                        {
+                            if ( String.class.equals(v_ParameterClass) )
+                            {
+                                v_ParameterValue = v_Item.getValue();
+                            }
+                        }
+                        else
+                        {
+                            v_ParameterValue = Help.toObject(v_ParameterClass ,v_Item.getValue());
+                        }
+                    }
+                    
                     v_SetMethod.invoke(io_RowObject ,v_ParameterValue);
                 }
                 catch (Exception exce)

@@ -51,6 +51,44 @@ public class JU_RedisLettuce
     
     
     @Test
+    public void test_XJava_SetNull()
+    {
+        IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");
+        String v_DBName   = "bookstore";
+        String v_Table    = "math";
+        Book   v_Book     = new Book("firstGrade" ,9D ,new Date());
+        
+        System.out.println("书价原为：" + v_Book.getPrice());
+        
+        v_RedisOpt.insert(v_DBName ,v_Table ,v_Book.getName() ,v_Book);
+        v_RedisOpt.update(v_DBName ,v_Table ,v_Book.getName() ,"price" ,null);
+        v_Book = v_RedisOpt.getRow(v_Book.getName() ,Book.class);
+        System.out.println("书价改空：" + v_Book.getPrice());
+        
+        
+        v_Book.setPrice(8D);
+        v_RedisOpt.update(v_DBName ,v_Table ,v_Book.getName() ,v_Book);
+        v_Book = v_RedisOpt.getRow(v_Book.getName() ,Book.class);
+        System.out.println("书价改为：" + v_Book.getPrice());
+        
+        
+        v_Book.setPrice(null);
+        v_RedisOpt.update(v_DBName ,v_Table ,v_Book.getName() ,v_Book);
+        v_Book = v_RedisOpt.getRow(v_Book.getName() ,Book.class);
+        System.out.println("未改成空：" + v_Book.getPrice());
+        
+        
+        v_Book.setPrice(null);
+        v_RedisOpt.update(v_DBName ,v_Table ,v_Book.getName() ,v_Book ,true);
+        v_Book = v_RedisOpt.getRow(v_Book.getName() ,Book.class);
+        System.out.println("书价改空：" + v_Book.getPrice());
+        
+        v_RedisOpt.dropDatabase(v_DBName);
+    }
+    
+    
+    
+    @Test
     public void test_XJava_GetTables()
     {
         IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");
