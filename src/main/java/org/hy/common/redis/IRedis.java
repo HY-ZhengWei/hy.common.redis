@@ -56,6 +56,19 @@ public interface IRedis
     
     
     /**
+     * 获取Redis服务的当前时间
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-21
+     * @version     v1.0
+     *
+     * @return
+     */
+    public Date getNowTime();
+    
+    
+    
+    /**
      * 创建内存表
      * 
      *   注：库名称不存在时，自动创建

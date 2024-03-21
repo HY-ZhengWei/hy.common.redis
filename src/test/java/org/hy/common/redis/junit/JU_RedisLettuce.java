@@ -51,6 +51,16 @@ public class JU_RedisLettuce
     
     
     @Test
+    public void test_XJava_GetNowTime()
+    {
+        IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");
+        
+        System.out.println(v_RedisOpt.getNowTime().getFullMilli());
+    }
+    
+    
+    
+    @Test
     public void test_XJava_SetNull()
     {
         IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");

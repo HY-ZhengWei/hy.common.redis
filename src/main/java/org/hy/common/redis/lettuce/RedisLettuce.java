@@ -34,7 +34,9 @@ import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 public class RedisLettuce implements IRedis
 {
 
-    private static final Logger                          $Logger = new Logger(RedisLettuce.class);
+    private static final Logger                          $Logger       = new Logger(RedisLettuce.class);
+    
+    private static final long                            $UnixBaseTime = new Date("1970-01-01 00:00:00.000").getTime();
 
     private RedisClusterClient                           clusterClient;
 
@@ -92,6 +94,35 @@ public class RedisLettuce implements IRedis
     public Object getSource()
     {
         return this.clusterCmd;
+    }
+    
+    
+    
+    /**
+     * 获取Redis服务的当前时间
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-21
+     * @version     v1.0
+     *
+     * @return     返回时间精度：毫秒
+     */
+    @Override
+    public Date getNowTime()
+    {
+        List<String> v_UnixTime = this.clusterCmd.time();
+        if ( Help.isNull(v_UnixTime) || v_UnixTime.size() < 2 )
+        {
+            return null;
+        }
+        
+        long v_Second      = Long.parseLong(v_UnixTime.get(0));        // 1970-01-01以来的秒数
+        long v_MilliSecond = Long.parseLong(v_UnixTime.get(1)) / 1000; // 微秒转为毫秒
+        
+        v_UnixTime.clear();
+        v_UnixTime = null;
+        
+        return new Date($UnixBaseTime + v_Second * 1000 + v_MilliSecond);
     }
 
 
