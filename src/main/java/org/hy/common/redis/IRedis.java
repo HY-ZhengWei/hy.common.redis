@@ -56,7 +56,7 @@ public interface IRedis
     
     
     /**
-     * 获取Redis服务的当前时间
+     * 获取Redis服务的当前时间（Unix时间）
      * 
      * @author      ZhengWei(HY)
      * @createDate  2024-03-21
@@ -65,6 +65,20 @@ public interface IRedis
      * @return
      */
     public Date getNowTime();
+    
+    
+    
+    /**
+     * 获取Redis服务的当前时间（指定时区）
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-21
+     * @version     v1.0
+     *
+     * @param i_Timezone  时间区，如中国时区为 +8
+     * @return
+     */
+    public Date getNowTime(int i_Timezone);
     
     
     

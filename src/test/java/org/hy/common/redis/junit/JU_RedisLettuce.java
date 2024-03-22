@@ -54,8 +54,14 @@ public class JU_RedisLettuce
     public void test_XJava_GetNowTime()
     {
         IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");
+        Date   v_NowTime  = v_RedisOpt.getNowTime();
         
-        System.out.println(v_RedisOpt.getNowTime().getFullMilli());
+        System.out.println(v_NowTime.getFullMilli());
+        System.out.println(new Date(v_NowTime.getTime() + 8 * 60 * 60 * 1000).getFullMilli());
+        
+        
+        v_NowTime  = v_RedisOpt.getNowTime(8);
+        System.out.println(v_NowTime.getFullMilli());
     }
     
     

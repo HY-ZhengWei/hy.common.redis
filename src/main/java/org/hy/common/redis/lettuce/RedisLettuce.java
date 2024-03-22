@@ -99,7 +99,7 @@ public class RedisLettuce implements IRedis
     
     
     /**
-     * 获取Redis服务的当前时间
+     * 获取Redis服务的当前时间（Unix时间）
      * 
      * @author      ZhengWei(HY)
      * @createDate  2024-03-21
@@ -109,6 +109,24 @@ public class RedisLettuce implements IRedis
      */
     @Override
     public Date getNowTime()
+    {
+        return this.getNowTime(0);
+    }
+    
+    
+    
+    /**
+     * 获取Redis服务的当前时间（指定时区）
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-21
+     * @version     v1.0
+     *
+     * @param i_Timezone  时间区，如中国时区为 +8
+     * @return
+     */
+    @Override
+    public Date getNowTime(int i_Timezone)
     {
         List<String> v_UnixTime = this.clusterCmd.time();
         if ( Help.isNull(v_UnixTime) || v_UnixTime.size() < 2 )
@@ -122,7 +140,7 @@ public class RedisLettuce implements IRedis
         v_UnixTime.clear();
         v_UnixTime = null;
         
-        return new Date($UnixBaseTime + v_Second * 1000 + v_MilliSecond);
+        return new Date($UnixBaseTime + v_Second * 1000 + v_MilliSecond + i_Timezone * 60 * 60 * 1000);
     }
 
 
