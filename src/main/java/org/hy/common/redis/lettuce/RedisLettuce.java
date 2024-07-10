@@ -1154,7 +1154,7 @@ public class RedisLettuce implements IRedis
      * @param <E>          行类型
      * @param i_PrimaryKey 行主键
      * @param io_RowObject 行对象
-     * @return
+     * @return             查不时返回NULL
      */
     @Override
     public <E> E getRow(String i_PrimaryKey ,E io_RowObject)
@@ -1173,7 +1173,7 @@ public class RedisLettuce implements IRedis
         
         if ( Help.isNull(v_RowDatas) )
         {
-            return io_RowObject;
+            return null;
         }
         else if ( io_RowObject instanceof SerializableDef )
         {

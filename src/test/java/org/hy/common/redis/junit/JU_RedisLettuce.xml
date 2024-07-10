@@ -13,7 +13,7 @@
         
         <!-- 节点参数统一配置模板 -->
         <redis id="Redis">
-            <pwd encrypt="org.hy.common.StringHelp"></pwd>                <!-- 可选配置：密码 -->
+            <pwd encrypt="org.hy.common.StringHelp">redis@20231107</pwd>  <!-- 可选配置：密码 -->
             <database>0</database>                                        <!-- 可选配置：数据库编号 -->
             <ssl>false</ssl>                                              <!-- 可选配置：SSL连接协议是否开启 -->
             <tls>false</tls>                                              <!-- 可选配置：TLS连接协议是否开启 -->
