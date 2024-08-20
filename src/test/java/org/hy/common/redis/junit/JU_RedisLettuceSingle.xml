@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<config>
+
+    <import name="xobjects"        class="java.util.ArrayList" />
+    <import name="redis"           class="org.hy.common.redis.cluster.RedisConfig" />
+    <import name="redisOpt"        class="org.hy.common.redis.lettuce.RedisLettuceSingle" />
+    
+    
+    
+    <xobjects>
+        
+        <!-- 节点参数统一配置模板 -->
+        <redis id="Redis">
+            <host>192.168.0.174</host>
+            <port>6379</port>
+            <pwd encrypt="org.hy.common.StringHelp">password</pwd>        <!-- 可选配置：密码 -->
+            <database>0</database>                                        <!-- 可选配置：数据库编号 -->
+            <ssl>false</ssl>                                              <!-- 可选配置：SSL连接协议是否开启 -->
+            <tls>false</tls>                                              <!-- 可选配置：TLS连接协议是否开启 -->
+            <timeout>15</timeout>                                         <!-- 可选配置：超时时长，单位：秒。优先级高于集群配置的超时时长 -->
+        </redis>
+        
+        
+        
+        <redisOpt id="RedisOperation">
+            <constructor>
+                <redisConfig ref="Redis" />
+            </constructor>
+        </redisOpt>
+        
+    </xobjects>
+
+</config>

@@ -13,56 +13,49 @@ import org.hy.common.MethodReflect;
 import org.hy.common.TablePartitionRID;
 import org.hy.common.redis.IRedis;
 import org.hy.common.redis.RData;
-import org.hy.common.redis.cluster.RedisClusterConfig;
+import org.hy.common.redis.cluster.RedisConfig;
 import org.hy.common.xml.SerializableDef;
 import org.hy.common.xml.log.Logger;
 
-import io.lettuce.core.cluster.RedisClusterClient;
-import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.api.sync.RedisCommands;
 
 
 
 
 
 /**
- * Redis数据库访问的Lettuce实现（集群模式）
+ * Redis数据库访问的Lettuce实现（单机模式）
  *
  * @author      ZhengWei(HY)
- * @createDate  2024-03-15
+ * @createDate  2024-08-20
  * @version     v1.0
  */
-public class RedisLettuce implements IRedis
+public class RedisLettuceSingle implements IRedis
 {
 
-    private static final Logger                          $Logger       = new Logger(RedisLettuce.class);
+    private static final Logger           $Logger       = new Logger(RedisLettuceSingle.class);
     
-    private static final long                            $UnixBaseTime = new Date("1970-01-01 00:00:00.000").getTime();
+    private static final long             $UnixBaseTime = new Date("1970-01-01 00:00:00.000").getTime();
 
-    private RedisClusterClient                           clusterClient;
+    private RedisClient                   redisClient;
 
-    private RedisAdvancedClusterCommands<String ,String> clusterCmd;
+    private RedisCommands<String ,String> redisCmd;
 
 
 
-    public RedisLettuce(RedisClusterConfig i_RedisClusterConfig)
+    public RedisLettuceSingle(RedisConfig i_Config)
     {
-        this(i_RedisClusterConfig.toLettuce());
-    }
-
-
-
-    public RedisLettuce(RedisClusterClient i_ClusterClient)
-    {
-        this.clusterClient = i_ClusterClient;
+        this.redisClient  = RedisClient.create(i_Config.toLettuce());
         
         try
         {
-            // 创建连接到 Redis 集群的连接
-            this.clusterCmd = this.clusterClient.connect().sync();
+            // 创建连接到 Redis 的连接
+            this.redisCmd = this.redisClient.connect().sync();
         }
         catch (Exception exce)
         {
-            $Logger.error("Failed to connect to the Redis cluster" ,exce);
+            $Logger.error("Failed to connect to the Redis" ,exce);
             throw exce;
         }
     }
@@ -72,8 +65,8 @@ public class RedisLettuce implements IRedis
     @Override
     protected void finalize() throws Throwable
     {
-        this.clusterClient.shutdown();
-        this.clusterClient = null;
+        this.redisClient .shutdown();
+        this.redisClient  = null;
     }
     
     
@@ -93,7 +86,7 @@ public class RedisLettuce implements IRedis
     @Override
     public Object getSource()
     {
-        return this.clusterCmd;
+        return this.redisCmd;
     }
     
     
@@ -128,7 +121,7 @@ public class RedisLettuce implements IRedis
     @Override
     public Date getNowTime(int i_Timezone)
     {
-        List<String> v_UnixTime = this.clusterCmd.time();
+        List<String> v_UnixTime = this.redisCmd.time();
         if ( Help.isNull(v_UnixTime) || v_UnixTime.size() < 2 )
         {
             return null;
@@ -201,7 +194,7 @@ public class RedisLettuce implements IRedis
         // 判定表对象是否存在
         if ( this.isExistsTable_Core(v_TableID) )
         {
-            String v_CreateTime = this.clusterCmd.hget(v_DBID ,v_TableID);
+            String v_CreateTime = this.redisCmd.hget(v_DBID ,v_TableID);
             $Logger.error("Table[" + v_TableID + "] exists ,it was created at " + v_CreateTime);
             return false;
         }
@@ -210,14 +203,14 @@ public class RedisLettuce implements IRedis
         {
             // 添加一个空主键，使用空字段实现预占用的创建库Hash对象
             // 不通过返回值判定，也不报错，提高容错性
-            this.clusterCmd.hsetnx(v_DBID ,"" ,new Date().getFull());
+            this.redisCmd.hsetnx(v_DBID ,"" ,new Date().getFull());
         }
         
         // 判定表是否关系到库（不存在是创建关系，而不是报错，提高容错性）
         String v_Now = Date.getNowTime().getFull();
-        if ( !this.clusterCmd.hexists(v_DBID ,v_TableID) )
+        if ( !this.redisCmd.hexists(v_DBID ,v_TableID) )
         {
-            if ( !this.clusterCmd.hset(v_DBID ,v_TableID ,v_Now) )
+            if ( !this.redisCmd.hset(v_DBID ,v_TableID ,v_Now) )
             {
                 $Logger.error("An exception occurred while creating the Table[" + v_TableID + "] for MetaData.");
                 return false;
@@ -226,7 +219,7 @@ public class RedisLettuce implements IRedis
         
         // 添加一个空主键，使用空字段实现预占用的创建表Hash对象
         // 不通过返回值判定，也不报错，提高容错性
-        this.clusterCmd.hsetnx(v_TableID ,"" ,v_Now);
+        this.redisCmd.hsetnx(v_TableID ,"" ,v_Now);
         return true;
     }
 
@@ -284,9 +277,9 @@ public class RedisLettuce implements IRedis
     private boolean dropTable_Core(String i_DBID ,String i_TableID)
     {
         this.truncate_Core(i_TableID);                        // 清空数据
-        this.clusterCmd.hdel(i_TableID ,"");                  // 删除 空主键
-        this.clusterCmd.del(i_TableID);                       // 删除表
-        return this.clusterCmd.hdel(i_DBID ,i_TableID) >= 1L; // 删除表库关系
+        this.redisCmd.hdel(i_TableID ,"");                  // 删除 空主键
+        this.redisCmd.del(i_TableID);                       // 删除表
+        return this.redisCmd.hdel(i_DBID ,i_TableID) >= 1L; // 删除表库关系
     }
     
     
@@ -327,7 +320,7 @@ public class RedisLettuce implements IRedis
             }
         }
         
-        return this.clusterCmd.del(v_DBID) >= 1L;
+        return this.redisCmd.del(v_DBID) >= 1L;
     }
 
 
@@ -378,7 +371,7 @@ public class RedisLettuce implements IRedis
      */
     private Long truncate_Core(String i_TableID)
     {
-        Map<String ,String> v_RowIDs = this.clusterCmd.hgetall(i_TableID);
+        Map<String ,String> v_RowIDs = this.redisCmd.hgetall(i_TableID);
         if ( Help.isNull(v_RowIDs) )
         {
             return 0L;
@@ -456,8 +449,8 @@ public class RedisLettuce implements IRedis
      */
     private Long delete_Core(String i_TableID ,String i_PrimaryKey)
     {
-        this.clusterCmd.hdel(i_TableID ,i_PrimaryKey);
-        return this.clusterCmd.del(i_PrimaryKey);
+        this.redisCmd.hdel(i_TableID ,i_PrimaryKey);
+        return this.redisCmd.del(i_PrimaryKey);
     }
 
 
@@ -682,10 +675,10 @@ public class RedisLettuce implements IRedis
     private Long insert_Core(String i_TableID ,String i_PrimaryKey ,String i_Field ,String i_Value)
     {
         // 表、主键关系
-        this.clusterCmd.hsetnx(i_TableID ,i_PrimaryKey ,Date.getNowTime().getFull());
+        this.redisCmd.hsetnx(i_TableID ,i_PrimaryKey ,Date.getNowTime().getFull());
         
         // 一行中的一个字段的数据
-        if ( this.clusterCmd.hsetnx(i_PrimaryKey ,i_Field ,i_Value) )
+        if ( this.redisCmd.hsetnx(i_PrimaryKey ,i_Field ,i_Value) )
         {
             return 1L;
         }
@@ -947,17 +940,17 @@ public class RedisLettuce implements IRedis
     private Long update_Core(String i_TableID ,String i_PrimaryKey ,String i_Field ,String i_Value)
     {
         // 表、主键关系
-        this.clusterCmd.hsetnx(i_TableID ,i_PrimaryKey ,Date.getNowTime().getFull());
+        this.redisCmd.hsetnx(i_TableID ,i_PrimaryKey ,Date.getNowTime().getFull());
         
         if ( i_Value == null )
         {
             // 一行中的一个字段被删除
-            this.clusterCmd.hdel(i_PrimaryKey ,i_Field);
+            this.redisCmd.hdel(i_PrimaryKey ,i_Field);
         }
         else
         {
             // 一行中的一个字段的数据
-            this.clusterCmd.hset(i_PrimaryKey ,i_Field ,i_Value);
+            this.redisCmd.hset(i_PrimaryKey ,i_Field ,i_Value);
         }
         return 1L;
     }
@@ -1100,7 +1093,7 @@ public class RedisLettuce implements IRedis
             return null;
         }
         
-        return this.clusterCmd.hgetall(i_PrimaryKey);
+        return this.redisCmd.hgetall(i_PrimaryKey);
     }
 
 
@@ -1169,7 +1162,7 @@ public class RedisLettuce implements IRedis
             return null;
         }
         
-        Map<String ,String> v_RowDatas = this.clusterCmd.hgetall(i_PrimaryKey);
+        Map<String ,String> v_RowDatas = this.redisCmd.hgetall(i_PrimaryKey);
         
         if ( Help.isNull(v_RowDatas) )
         {
@@ -1284,7 +1277,7 @@ public class RedisLettuce implements IRedis
         }
         
         String v_DBID = this.getDatabaseID(i_Database);
-        Map<String ,String> v_Datas = this.clusterCmd.hgetall(v_DBID);
+        Map<String ,String> v_Datas = this.redisCmd.hgetall(v_DBID);
         
         if ( !Help.isNull(v_Datas) )
         {
@@ -1324,7 +1317,7 @@ public class RedisLettuce implements IRedis
         
         TablePartitionRID<String ,String> v_Rows     = new TablePartitionRID<String ,String>();
         String                            v_TableID  = this.getTableID(i_Database ,i_TableName);
-        Map<String ,String>               v_RowDatas = this.clusterCmd.hgetall(v_TableID);
+        Map<String ,String>               v_RowDatas = this.redisCmd.hgetall(v_TableID);
         
         if ( !Help.isNull(v_RowDatas) )
         {
@@ -1381,7 +1374,7 @@ public class RedisLettuce implements IRedis
         
         Map<String ,E>      v_Rows     = new HashMap<String ,E>();
         String              v_TableID  = this.getTableID(i_Database ,i_TableName);
-        Map<String ,String> v_RowDatas = this.clusterCmd.hgetall(v_TableID);
+        Map<String ,String> v_RowDatas = this.redisCmd.hgetall(v_TableID);
         
         if ( !Help.isNull(v_RowDatas) )
         {
@@ -1438,7 +1431,7 @@ public class RedisLettuce implements IRedis
         
         List<E>             v_Rows     = new ArrayList<E>();
         String              v_TableID  = this.getTableID(i_Database ,i_TableName);
-        Map<String ,String> v_RowDatas = this.clusterCmd.hgetall(v_TableID);
+        Map<String ,String> v_RowDatas = this.redisCmd.hgetall(v_TableID);
         
         if ( !Help.isNull(v_RowDatas) )
         {
@@ -1485,7 +1478,7 @@ public class RedisLettuce implements IRedis
         }
         
         String v_DBID = this.getDatabaseID(i_Database);
-        String v_Time = this.clusterCmd.hget(v_DBID ,"");
+        String v_Time = this.redisCmd.hget(v_DBID ,"");
         
         if ( v_Time == null )
         {
@@ -1524,7 +1517,7 @@ public class RedisLettuce implements IRedis
         }
         
         String v_TableID = this.getTableID(i_Database ,i_TableName);
-        String v_Time = this.clusterCmd.hget(v_TableID ,"");
+        String v_Time = this.redisCmd.hget(v_TableID ,"");
         
         if ( v_Time == null )
         {
@@ -1569,7 +1562,7 @@ public class RedisLettuce implements IRedis
         }
         
         String v_TableID = this.getTableID(i_Database ,i_TableName);
-        String v_Time = this.clusterCmd.hget(v_TableID ,i_PrimaryKey);
+        String v_Time = this.redisCmd.hget(v_TableID ,i_PrimaryKey);
         
         if ( v_Time == null )
         {
@@ -1715,7 +1708,7 @@ public class RedisLettuce implements IRedis
      */
     private boolean isExistsDatabase_Core(String i_DBID)
     {
-        if ( this.clusterCmd.exists(i_DBID) >= 1L )
+        if ( this.redisCmd.exists(i_DBID) >= 1L )
         {
             return true;
         }
@@ -1739,7 +1732,7 @@ public class RedisLettuce implements IRedis
      */
     private boolean isExistsTable_Core(String i_TableID)
     {
-        if ( this.clusterCmd.exists(i_TableID) >= 1L )
+        if ( this.redisCmd.exists(i_TableID) >= 1L )
         {
             return true;
         }
@@ -1763,7 +1756,7 @@ public class RedisLettuce implements IRedis
      */
     private boolean isExistsPrimaryKey_Core(String i_PrimaryKey)
     {
-        if ( this.clusterCmd.exists(i_PrimaryKey) >= 1L )
+        if ( this.redisCmd.exists(i_PrimaryKey) >= 1L )
         {
             return true;
         }
@@ -1788,7 +1781,7 @@ public class RedisLettuce implements IRedis
      */
     private boolean isExistsField_Core(String i_PrimaryKey ,String i_Field)
     {
-        return this.clusterCmd.hexists(i_PrimaryKey ,i_Field);
+        return this.redisCmd.hexists(i_PrimaryKey ,i_Field);
     }
     
 }
