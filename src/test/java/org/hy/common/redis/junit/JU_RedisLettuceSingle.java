@@ -77,7 +77,7 @@ public class JU_RedisLettuceSingle
         System.out.println("书价原为：" + v_Book.getPrice());
         
         v_RedisOpt.insert(v_DBName ,v_Table ,v_Book.getName() ,v_Book);
-        v_RedisOpt.update(v_DBName ,v_Table ,v_Book.getName() ,"price" ,null);
+        v_RedisOpt.update(v_DBName ,v_Table ,v_Book.getName() ,"price" ,(String) null);
         v_Book = v_RedisOpt.getRow(v_Book.getName() ,Book.class);
         System.out.println("书价改空：" + v_Book.getPrice());
         

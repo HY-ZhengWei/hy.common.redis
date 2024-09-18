@@ -30,6 +30,8 @@ import io.lettuce.core.api.sync.RedisCommands;
  * @author      ZhengWei(HY)
  * @createDate  2024-08-20
  * @version     v1.0
+ *              v2.0  2024-09-14  添加：查询时主动删除因过期时间、脏数据等原因的数据
+ *                                添加：插入、更新和保存一行数据时，可设置过期时间
  */
 public class RedisLettuceSingle implements IRedis
 {
@@ -550,7 +552,7 @@ public class RedisLettuceSingle implements IRedis
                 return -2L;
             }
         }
-        return insert_Core(v_TableID ,i_RData.getKey() ,i_RData.getField() ,i_RData.getValue());
+        return this.insert_Core(v_TableID ,i_RData.getKey() ,i_RData.getField() ,i_RData.getValue());
     }
 
 
@@ -573,6 +575,30 @@ public class RedisLettuceSingle implements IRedis
     @Override
     public Long insert(String i_Database ,String i_TableName ,String i_PrimaryKey ,Object i_Datas)
     {
+        return this.insert(i_Database ,i_TableName ,i_PrimaryKey ,i_Datas ,null);
+    }
+    
+    
+    
+    /**
+     * 插入一行数据
+     * 
+     * 注：表不存时，自动创建表、库关系等信息
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-09-14
+     * @version     v1.0
+     * 
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @param i_PrimaryKey 行主键
+     * @param i_Datas      数据信息
+     * @param i_Expire     过期时间（单位：秒）
+     * @return             返回影响的行数。负数表示异常
+     */
+    @Override
+    public Long insert(String i_Database ,String i_TableName ,String i_PrimaryKey ,Object i_Datas ,Long i_Expire)
+    {
         if ( i_Datas == null )
         {
             return -1L;
@@ -586,7 +612,7 @@ public class RedisLettuceSingle implements IRedis
         
         try
         {
-            return insert(i_Database ,i_TableName ,i_PrimaryKey ,Help.toMap(i_Datas));
+            return this.insert(i_Database ,i_TableName ,i_PrimaryKey ,Help.toMap(i_Datas) ,i_Expire);
         }
         catch (Exception exce)
         {
@@ -594,9 +620,9 @@ public class RedisLettuceSingle implements IRedis
             return -9L;
         }
     }
-
-
-
+    
+    
+    
     /**
      * 插入一行数据
      * 
@@ -614,6 +640,30 @@ public class RedisLettuceSingle implements IRedis
      */
     @Override
     public Long insert(String i_Database ,String i_TableName ,String i_PrimaryKey ,Map<String ,Object> i_Datas)
+    {
+        return this.insert(i_Database ,i_TableName ,i_PrimaryKey ,i_Datas ,null);
+    }
+
+
+
+    /**
+     * 插入一行数据
+     * 
+     * 注：表不存时，自动创建表、库关系等信息
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-09-14
+     * @version     v1.0
+     * 
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @param i_PrimaryKey 行主键
+     * @param i_Datas      数据信息
+     * @param i_Expire     过期时间（单位：秒）
+     * @return             返回影响的行数。负数表示异常
+     */
+    @Override
+    public Long insert(String i_Database ,String i_TableName ,String i_PrimaryKey ,Map<String ,Object> i_Datas ,Long i_Expire)
     {
         if ( Help.isNull(i_Database) )
         {
@@ -651,6 +701,15 @@ public class RedisLettuceSingle implements IRedis
             else
             {
                 v_Count += this.insert_Core(v_TableID ,i_PrimaryKey ,v_Data.getKey() ,v_Data.getValue().toString());
+            }
+        }
+        
+        // 设置行级过期时间
+        if ( v_Count >= 1 )
+        {
+            if ( i_Expire != null && i_Expire > 0L )
+            {
+                this.redisCmd.expire(i_PrimaryKey ,i_Expire);
             }
         }
         
@@ -821,6 +880,31 @@ public class RedisLettuceSingle implements IRedis
      * 注：当行数据不存时：在Redis创建行数据，即有 insert() 方法的能力
      * 
      * @author      ZhengWei(HY)
+     * @createDate  2024-09-18
+     * @version     v1.0
+     * 
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @param i_PrimaryKey 行主键
+     * @param i_Datas      数据信息。对象成员属性为 null 时，当 i_HaveNullValue 为假时，对象成员属性不参与更新
+     * @param i_ExpireTime 过期时间（单位：秒）
+     * @return             返回影响的行数。负数表示异常
+     */
+    @Override
+    public Long update(String i_Database ,String i_TableName ,String i_PrimaryKey ,Object i_Datas ,Long i_ExpireTime)
+    {
+        return this.update(i_Database ,i_TableName ,i_PrimaryKey ,i_Datas ,false ,i_ExpireTime);
+    }
+    
+    
+    
+    /**
+     * 更新一行数据
+     * 
+     * 注：表不存时，自动创建表、库关系等信息
+     * 注：当行数据不存时：在Redis创建行数据，即有 insert() 方法的能力
+     * 
+     * @author      ZhengWei(HY)
      * @createDate  2024-03-16
      * @version     v1.0
      * 
@@ -835,6 +919,33 @@ public class RedisLettuceSingle implements IRedis
     @Override
     public Long update(String i_Database ,String i_TableName ,String i_PrimaryKey ,Object i_Datas ,boolean i_HaveNullValue)
     {
+        return this.update(i_Database ,i_TableName ,i_PrimaryKey ,i_Datas ,i_HaveNullValue ,null);
+    }
+    
+    
+    
+    /**
+     * 更新一行数据
+     * 
+     * 注：表不存时，自动创建表、库关系等信息
+     * 注：当行数据不存时：在Redis创建行数据，即有 insert() 方法的能力
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-09-18
+     * @version     v1.0
+     * 
+     * @param i_Database       库名称
+     * @param i_TableName      表名称
+     * @param i_PrimaryKey     行主键
+     * @param i_Datas          数据信息。对象成员属性为 null 时，当 i_HaveNullValue 为假时，对象成员属性不参与更新
+     *                                  对象成员属性为 null 时，当 i_HaveNullValue 为真时，对象成员属性将从Redis中删除
+     * @param i_HaveNullValue  是否包含对象属性值为null的元素
+     * @param i_ExpireTime     过期时间（单位：秒）
+     * @return                 返回影响的行数。负数表示异常
+     */
+    @Override
+    public Long update(String i_Database ,String i_TableName ,String i_PrimaryKey ,Object i_Datas ,boolean i_HaveNullValue ,Long i_ExpireTime)
+    {
         if ( i_Datas == null )
         {
             return -1L;
@@ -848,7 +959,7 @@ public class RedisLettuceSingle implements IRedis
         
         try
         {
-            return update(i_Database ,i_TableName ,i_PrimaryKey ,Help.toMap(i_Datas ,null ,i_HaveNullValue ,false));
+            return this.update(i_Database ,i_TableName ,i_PrimaryKey ,Help.toMap(i_Datas ,null ,i_HaveNullValue ,false) ,i_ExpireTime);
         }
         catch (Exception exce)
         {
@@ -877,6 +988,31 @@ public class RedisLettuceSingle implements IRedis
      */
     @Override
     public Long update(String i_Database ,String i_TableName ,String i_PrimaryKey ,Map<String ,Object> i_Datas)
+    {
+        return this.update(i_Database ,i_TableName ,i_PrimaryKey ,i_Datas ,null);
+    }
+    
+    
+    
+    /**
+     * 更新一行数据
+     * 
+     * 注：表不存时，自动创建表、库关系等信息
+     * 注：当行数据不存时：在Redis创建行数据，即有 insert() 方法的能力
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-09-18
+     * @version     v1.0
+     * 
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @param i_PrimaryKey 行主键
+     * @param i_Datas      数据信息。当为 Map.value 为 null 时，将执行Redis删除命令
+     * @param i_ExpireTime 过期时间（单位：秒）
+     * @return             返回影响的行数。负数表示异常
+     */
+    @Override
+    public Long update(String i_Database ,String i_TableName ,String i_PrimaryKey ,Map<String ,Object> i_Datas ,Long i_ExpireTime)
     {
         if ( Help.isNull(i_Database) )
         {
@@ -915,6 +1051,12 @@ public class RedisLettuceSingle implements IRedis
             {
                 v_Count += this.update_Core(v_TableID ,i_PrimaryKey ,v_Data.getKey() ,v_Data.getValue().toString());
             }
+        }
+        
+        // 设置行级过期时间
+        if ( v_Count >= 1 )
+        {
+            this.expire(i_PrimaryKey ,i_ExpireTime);
         }
         
         return v_Count;
@@ -1032,6 +1174,30 @@ public class RedisLettuceSingle implements IRedis
      * 注：表不存时，自动创建表、库关系等信息
      * 
      * @author      ZhengWei(HY)
+     * @createDate  2024-09-18
+     * @version     v1.0
+     * 
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @param i_PrimaryKey 行主键
+     * @param i_Datas      数据信息。对象成员属性为 null 时，当 i_HaveNullValue 为假时，对象成员属性不参与更新
+     * @param i_ExpireTime 过期时间（单位：秒）
+     * @return             返回影响的行数。负数表示异常
+     */
+    @Override
+    public Long save(String i_Database ,String i_TableName ,String i_PrimaryKey ,Object i_Datas ,Long i_ExpireTime)
+    {
+        return this.update(i_Database ,i_TableName ,i_PrimaryKey ,i_Datas ,i_ExpireTime);
+    }
+    
+    
+    
+    /**
+     * 保存一行数据（数据不存时：创建。数据存时：更新或删除）
+     * 
+     * 注：表不存时，自动创建表、库关系等信息
+     * 
+     * @author      ZhengWei(HY)
      * @createDate  2024-03-20
      * @version     v1.0
      * 
@@ -1057,6 +1223,32 @@ public class RedisLettuceSingle implements IRedis
      * 注：表不存时，自动创建表、库关系等信息
      * 
      * @author      ZhengWei(HY)
+     * @createDate  2024-09-18
+     * @version     v1.0
+     * 
+     * @param i_Database       库名称
+     * @param i_TableName      表名称
+     * @param i_PrimaryKey     行主键
+     * @param i_Datas          数据信息。对象成员属性为 null 时，当 i_HaveNullValue 为假时，对象成员属性不参与更新
+     *                                  对象成员属性为 null 时，当 i_HaveNullValue 为真时，对象成员属性将从Redis中删除
+     * @param i_HaveNullValue  是否包含对象属性值为null的元素
+     * @param i_ExpireTime     过期时间（单位：秒）
+     * @return                 返回影响的行数。负数表示异常
+     */
+    @Override
+    public Long save(String i_Database ,String i_TableName ,String i_PrimaryKey ,Object i_Datas ,boolean i_HaveNullValue ,Long i_ExpireTime)
+    {
+        return this.update(i_Database ,i_TableName ,i_PrimaryKey ,i_Datas ,i_HaveNullValue ,i_ExpireTime);
+    }
+    
+    
+    
+    /**
+     * 保存一行数据（数据不存时：创建。数据存时：更新或删除）
+     * 
+     * 注：表不存时，自动创建表、库关系等信息
+     * 
+     * @author      ZhengWei(HY)
      * @createDate  2024-03-20
      * @version     v1.0
      * 
@@ -1070,6 +1262,30 @@ public class RedisLettuceSingle implements IRedis
     public Long save(String i_Database ,String i_TableName ,String i_PrimaryKey ,Map<String ,Object> i_Datas)
     {
         return this.update(i_Database ,i_TableName ,i_PrimaryKey ,i_Datas);
+    }
+    
+    
+    
+    /**
+     * 保存一行数据（数据不存时：创建。数据存时：更新或删除）
+     * 
+     * 注：表不存时，自动创建表、库关系等信息
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-09-18
+     * @version     v1.0
+     * 
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @param i_PrimaryKey 行主键
+     * @param i_Datas      数据信息。当为 Map.value 为 null 时，将执行Redis删除命令
+     * @param i_ExpireTime 过期时间（单位：秒）
+     * @return             返回影响的行数。负数表示异常
+     */
+    @Override
+    public Long save(String i_Database ,String i_TableName ,String i_PrimaryKey ,Map<String ,Object> i_Datas ,Long i_ExpireTime)
+    {
+        return this.update(i_Database ,i_TableName ,i_PrimaryKey ,i_Datas ,i_ExpireTime);
     }
     
     
@@ -1335,6 +1551,16 @@ public class RedisLettuceSingle implements IRedis
                 {
                     v_Rows.putRows(v_RowItem.getKey() ,v_RowObject);
                 }
+                else
+                {
+                    // 2024-09-14 Add
+                    // 只有主键信息，没有行数据信息时，删除主键信息
+                    // 这情况产生的原因有：
+                    //     情况1：行数据信息因到过期时间后被Redis释放
+                    //     情况2：本类库Bug而生成的脏数据
+                    //     情况3：本类库生成的结构被第三方窜改
+                    this.delete(i_Database ,i_TableName ,v_RowItem.getKey());
+                }
             }
         }
         
@@ -1392,6 +1618,16 @@ public class RedisLettuceSingle implements IRedis
                 {
                     v_Rows.put(v_RowItem.getKey() ,v_RowObject);
                 }
+                else
+                {
+                    // 2024-09-14 Add
+                    // 只有主键信息，没有行数据信息时，删除主键信息
+                    // 这情况产生的原因有：
+                    //     情况1：行数据信息因到过期时间后被Redis释放
+                    //     情况2：本类库Bug而生成的脏数据
+                    //     情况3：本类库生成的结构被第三方窜改
+                    this.delete(i_Database ,i_TableName ,v_RowItem.getKey());
+                }
             }
         }
         
@@ -1448,6 +1684,16 @@ public class RedisLettuceSingle implements IRedis
                 if ( v_RowObject != null )
                 {
                     v_Rows.add(v_RowObject);
+                }
+                else
+                {
+                    // 2024-09-14 Add
+                    // 只有主键信息，没有行数据信息时，删除主键信息
+                    // 这情况产生的原因有：
+                    //     情况1：行数据信息因到过期时间后被Redis释放
+                    //     情况2：本类库Bug而生成的脏数据
+                    //     情况3：本类库生成的结构被第三方窜改
+                    this.delete(i_Database ,i_TableName ,v_RowItem.getKey());
                 }
             }
         }
@@ -1782,6 +2028,32 @@ public class RedisLettuceSingle implements IRedis
     private boolean isExistsField_Core(String i_PrimaryKey ,String i_Field)
     {
         return this.redisCmd.hexists(i_PrimaryKey ,i_Field);
+    }
+    
+    
+    
+    /**
+     * 设置关键字的过期时长
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-09-14
+     * @version     v1.0
+     *
+     * @param i_Key         关键字
+     * @param i_ExpireTime  过期时间（单位：秒）
+     * @return
+     */
+    @Override
+    public boolean expire(String i_Key ,Long i_ExpireTime)
+    {
+        if ( i_ExpireTime == null || i_ExpireTime <= 0L )
+        {
+            return false;
+        }
+        else
+        {
+            return this.redisCmd.expireat(i_Key ,i_ExpireTime);
+        }
     }
     
 }
