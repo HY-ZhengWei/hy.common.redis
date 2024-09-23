@@ -2058,6 +2058,136 @@ public class RedisLettuce implements IRedis
         {
             return this.clusterCmd.expireat(i_Key ,i_ExpireTime);
         }
+        
+    }
+    
+    
+    
+    /**
+     * 获取过期时长（单位：秒）
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-09-23
+     * @version     v1.0
+     *
+     * @param i_Key  关键字
+     * @return
+     */
+    public Long expiretime(String i_Key)
+    {
+        return this.clusterCmd.expiretime(i_Key);
+    }
+    
+    
+    
+    /**
+     * 设置数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-09-23
+     * @version     v1.0
+     *
+     * @param i_Key    关键字
+     * @param i_Value  数据
+     * @return         成功返回true
+     */
+    @Override
+    public Boolean set(String i_Key ,String i_Value)
+    {
+        return "OK".equals(this.clusterCmd.set(i_Key ,i_Value));
+    }
+    
+    
+    
+    /**
+     * 设置数据，并且设定过期时长
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-09-23
+     * @version     v1.0
+     *
+     * @param i_Key
+     * @param i_Value
+     * @param i_ExpireTime  过期时间（单位：秒）
+     * @return
+     */
+    @Override
+    public String setex(String i_Key ,String i_Value ,Long i_ExpireTime)
+    {
+        return this.clusterCmd.setex(i_Key ,i_ExpireTime ,i_Value);
+    }
+    
+    
+    
+    /**
+     * 设置数据，仅在关键字不存在时设置数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-09-23
+     * @version     v1.0
+     *
+     * @param i_Key    关键字
+     * @param i_Value  数据
+     * @return         是否设置数据
+     */
+    @Override
+    public Boolean setnx(String i_Key ,String i_Value)
+    {
+        return this.clusterCmd.setnx(i_Key ,i_Value);
+    }
+    
+    
+    
+    /**
+     * 获取数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-09-23
+     * @version     v1.0
+     *
+     * @param i_Key  关键字
+     * @return
+     */
+    @Override
+    public String get(String i_Key)
+    {
+        return this.clusterCmd.get(i_Key);
+    }
+    
+    
+    
+    /**
+     * 获取数据并删除
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-09-23
+     * @version     v1.0
+     *
+     * @param i_Key  关键字
+     * @return
+     */
+    @Override
+    public String getdel(String i_Key)
+    {
+        return this.clusterCmd.getdel(i_Key);
+    }
+    
+    
+    
+    /**
+     * 删除数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-09-23
+     * @version     v1.0
+     *
+     * @param i_Keys  一个或多个关键字
+     * @return        返回删除数据的数量
+     */
+    @Override
+    public Long del(String ... i_Keys)
+    {
+        return this.clusterCmd.del(i_Keys);
     }
     
 }

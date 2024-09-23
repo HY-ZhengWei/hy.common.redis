@@ -51,6 +51,21 @@ public class JU_RedisLettuce
     
     
     @Test
+    public void test_GetSet()
+    {
+        IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");
+        
+        System.out.println("set: " + v_RedisOpt.set("HY" ,"ABC123"));
+        System.out.println("snx: " + v_RedisOpt.setnx("HY" ,"ABC123"));
+        System.out.println("sex: " + v_RedisOpt.setex("HY" ,"ABC123" ,60L));
+        System.out.println("get: " + v_RedisOpt.get("HY"));
+        System.out.println("gdt: " + v_RedisOpt.getdel("HY"));
+        System.out.println("del: " + v_RedisOpt.del("HY"));
+    }
+    
+    
+    
+    @Test
     public void test_XJava_GetNowTime()
     {
         IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");
