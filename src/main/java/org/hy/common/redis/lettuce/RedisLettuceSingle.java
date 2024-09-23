@@ -2084,15 +2084,15 @@ public class RedisLettuceSingle implements IRedis
      * @createDate  2024-09-23
      * @version     v1.0
      *
-     * @param i_Key
-     * @param i_Value
+     * @param i_Key         关键字
+     * @param i_Value       数据
      * @param i_ExpireTime  过期时间（单位：秒）
-     * @return
+     * @return         成功返回true
      */
     @Override
-    public String setex(String i_Key ,String i_Value ,Long i_ExpireTime)
+    public Boolean setex(String i_Key ,String i_Value ,Long i_ExpireTime)
     {
-        return this.redisCmd.setex(i_Key ,i_ExpireTime ,i_Value);
+        return "OK".equals(this.redisCmd.setex(i_Key ,i_ExpireTime ,i_Value));
     }
     
     
