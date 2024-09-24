@@ -51,6 +51,60 @@ public class JU_RedisLettuce
     
     
     @Test
+    public void testLoadrunner()
+    {
+        IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");
+        String v_DBName   = "bookstore";
+        String v_Table    = "math";
+        Book   v_Book     = null;
+        Date   v_STime    = new Date();
+        
+        System.out.println("开始测试：" + v_STime.getFullMilli());
+        
+        for (int i=1; i<=100; i++)
+        {
+            v_Book = new Book("firstGrade" + i ,9D ,new Date());
+            v_RedisOpt.insert(v_DBName ,v_Table ,v_Book.getName() ,v_Book);
+        }
+        System.out.println("写入用时：" + Date.toTimeLen(new Date().differ(v_STime)));
+        v_STime = new Date();
+        
+        for (int i=1; i<=100; i++)
+        {
+            v_Book = v_RedisOpt.getRow("firstGrade" + i ,Book.class);
+        }
+        System.out.println("读取用时：" + Date.toTimeLen(new Date().differ(v_STime)));
+        v_STime = new Date();
+        
+        for (int i=1; i<=100; i++)
+        {
+            v_RedisOpt.delete(v_DBName ,v_Table ,"firstGrade" + i);
+        }
+        System.out.println("删除用时：" + Date.toTimeLen(new Date().differ(v_STime)));
+    }
+    
+    
+    
+    @Test
+    public void testTable()
+    {
+        IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");
+        String v_DBName   = "bookstore";
+        String v_Table    = "math";
+        
+        Book v_Book = new Book("firstGrade" ,9D ,new Date());
+        v_RedisOpt.insert(v_DBName ,v_Table ,v_Book.getName() ,v_Book);
+        v_Book = v_RedisOpt.getRow(v_Book.getName() ,Book.class);
+        
+        System.out.println("Book: " + v_Book);
+        v_RedisOpt.delete(v_DBName ,v_Table ,v_Book.getName());
+        v_Book = v_RedisOpt.getRow(v_Book.getName() ,Book.class);
+        System.out.println("Book: " + v_Book);
+    }
+    
+    
+    
+    @Test
     public void test_GetSet()
     {
         IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");
