@@ -32,6 +32,8 @@ import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
  * @version     v1.0
  *              v2.0  2024-09-14  添加：主动删除因过期时间、脏数据等原因的数据
  *                                添加：插入、更新和保存一行数据时，可设置过期时间
+ *              v3.0  2025-02-06  添加：支持外界定义行数据类型(Class<E> i_RowClass)不是一个Java类，而是一个通用Map结构。
+ *                                    注：仅支持Map<String ,Object>结构的Map集合
  */
 public class RedisLettuce implements IRedis
 {
@@ -947,6 +949,7 @@ public class RedisLettuce implements IRedis
      * @param i_ExpireTime     过期时间（单位：秒）
      * @return                 返回影响的行数。负数表示异常
      */
+    @SuppressWarnings("unchecked")
     @Override
     public Long update(String i_Database ,String i_TableName ,String i_PrimaryKey ,Object i_Datas ,boolean i_HaveNullValue ,Long i_ExpireTime)
     {
@@ -963,7 +966,14 @@ public class RedisLettuce implements IRedis
         
         try
         {
-            return this.update(i_Database ,i_TableName ,i_PrimaryKey ,Help.toMap(i_Datas ,null ,i_HaveNullValue ,false) ,i_ExpireTime);
+            if ( MethodReflect.isExtendImplement(i_Datas ,Map.class) )
+            {
+                return this.update(i_Database ,i_TableName ,i_PrimaryKey ,(Map<String ,Object>)i_Datas ,i_ExpireTime);
+            }
+            else
+            {
+                return this.update(i_Database ,i_TableName ,i_PrimaryKey ,Help.toMap(i_Datas ,null ,i_HaveNullValue ,false) ,i_ExpireTime);
+            }
         }
         catch (Exception exce)
         {
@@ -1369,6 +1379,7 @@ public class RedisLettuce implements IRedis
      * @param io_RowObject 行对象
      * @return             查不时返回NULL
      */
+    @SuppressWarnings({"unchecked"})
     @Override
     public <E> E getRow(String i_PrimaryKey ,E io_RowObject)
     {
@@ -1387,6 +1398,13 @@ public class RedisLettuce implements IRedis
         if ( Help.isNull(v_RowDatas) )
         {
             return null;
+        }
+        else if ( MethodReflect.isExtendImplement(io_RowObject ,Map.class) )
+        {
+            for (Map.Entry<String ,String> v_Item : v_RowDatas.entrySet())
+            {
+                ((Map<String ,Object>)io_RowObject).put(v_Item.getKey() ,v_Item.getValue());
+            }
         }
         else if ( io_RowObject instanceof SerializableDef )
         {
