@@ -18,6 +18,7 @@ import redis.clients.jedis.ShardedJedisPool;
 public class RedisDemo
 {
 
+    @SuppressWarnings({"resource" ,"deprecation"})
     public static void main(String [] args)
     {
         // 配置单机访问

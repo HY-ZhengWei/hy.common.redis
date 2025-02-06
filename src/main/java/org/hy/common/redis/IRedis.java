@@ -33,6 +33,8 @@ import org.hy.common.TablePartitionRID;
  * @version     v1.0
  *              v2.0  2024-09-14  添加：插入、更新和保存一行数据时，可设置过期时间
  *              v3.0  2024-09-23  添加：开放字符串的get、set方法
+ *              v4.0  2025-02-06  添加：两个getRow(库名 ,表名 ,类型)接口。
+ *                                     用于在支持外界定义行数据类型是一个通用Map结构的同时，允许外界定义Map结构中的每个元素的Java类型
  */
 public interface IRedis
 {
@@ -646,6 +648,46 @@ public interface IRedis
      * @return
      */
     public <E> E getRow(String i_PrimaryKey ,E io_RowObject);
+    
+    
+    
+    /**
+     * 获取一行数据（Map结构中元素类型的翻译）
+     * 
+     *   当i_RowClass为Map结构，并且配置有 RedisMapType 时，将按其转换为Java类型
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2025-02-06
+     * @version     v1.0
+     *
+     * @param <E>          行类型
+     * @param i_Database   库名称（允许为空或NULL）
+     * @param i_TableName  表名称（允许为空或NULL）
+     * @param i_PrimaryKey 行主键
+     * @param i_RowClass   行类型的元类
+     * @return
+     */
+    public <E> E getRow(String i_Database ,String i_TableName ,String i_PrimaryKey ,Class<E> i_RowClass);
+    
+    
+    
+    /**
+     * 获取一行数据（Map结构中元素类型的翻译）
+     * 
+     *   当i_RowClass为Map结构，并且配置有 RedisMapType 时，将按其转换为Java类型
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2025-02-06
+     * @version     v1.0
+     *
+     * @param <E>          行类型
+     * @param i_Database   库名称（允许为空或NULL）
+     * @param i_TableName  表名称（允许为空或NULL）
+     * @param i_PrimaryKey 行主键
+     * @param io_RowObject 行对象
+     * @return
+     */
+    public <E> E getRow(String i_Database ,String i_TableName ,String i_PrimaryKey ,E io_RowObject);
     
     
     

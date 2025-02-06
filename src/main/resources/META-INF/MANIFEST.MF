@@ -1,6 +1,6 @@
-Manifest-Version: 1.1.5
+Manifest-Version: 1.1.6
 Created-By: HY.ZhengWei@qq.com  2014-09
-Specification-Version: 1.1.5  2025-02-06
+Specification-Version: 1.1.6  2025-02-06
 SourceCode: https://github.com/HY-ZhengWei/hy.common.redis
 SourceCodeChina: https://gitee.com/HY-ZhengWei/hy.common.redis
 Build-JDK: 17

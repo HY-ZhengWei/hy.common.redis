@@ -14,6 +14,7 @@ import org.hy.common.TablePartitionRID;
 import org.hy.common.redis.IRedis;
 import org.hy.common.redis.RData;
 import org.hy.common.redis.cluster.RedisConfig;
+import org.hy.common.redis.type.RedisMapType;
 import org.hy.common.xml.SerializableDef;
 import org.hy.common.xml.log.Logger;
 
@@ -1321,9 +1322,9 @@ public class RedisLettuceSingle implements IRedis
         
         return this.redisCmd.hgetall(i_PrimaryKey);
     }
-
-
-
+    
+    
+    
     /**
      * 获取一行数据
      * 
@@ -1338,6 +1339,50 @@ public class RedisLettuceSingle implements IRedis
      */
     @Override
     public <E> E getRow(String i_PrimaryKey ,Class<E> i_RowClass)
+    {
+        return this.getRow(null ,null ,i_PrimaryKey ,i_RowClass);
+    }
+
+
+
+    /**
+     * 获取一行数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2024-03-17
+     * @version     v1.0
+     *
+     * @param <E>          行类型
+     * @param i_PrimaryKey 行主键
+     * @param io_RowObject 行对象
+     * @return             查不时返回NULL
+     */
+    @Override
+    public <E> E getRow(String i_PrimaryKey ,E io_RowObject)
+    {
+        return this.getRow(null ,null ,i_PrimaryKey ,io_RowObject);
+    }
+
+
+
+    /**
+     * 获取一行数据（Map结构中元素类型的翻译）
+     * 
+     *   当i_RowClass为Map结构，并且配置有 RedisMapType 时，将按其转换为Java类型
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2025-02-06
+     * @version     v1.0
+     *
+     * @param <E>          行类型
+     * @param i_Database   库名称（允许为空或NULL）
+     * @param i_TableName  表名称（允许为空或NULL）
+     * @param i_PrimaryKey 行主键
+     * @param i_RowClass   行类型的元类
+     * @return
+     */
+    @Override
+    public <E> E getRow(String i_Database ,String i_TableName ,String i_PrimaryKey ,Class<E> i_RowClass)
     {
         if ( Help.isNull(i_PrimaryKey) )
         {
@@ -1364,20 +1409,24 @@ public class RedisLettuceSingle implements IRedis
 
 
     /**
-     * 获取一行数据
+     * 获取一行数据（Map结构中元素类型的翻译）
+     * 
+     *   当i_RowClass为Map结构，并且配置有 RedisMapType 时，将按其转换为Java类型
      * 
      * @author      ZhengWei(HY)
-     * @createDate  2024-03-17
+     * @createDate  2025-02-06
      * @version     v1.0
      *
      * @param <E>          行类型
+     * @param i_Database   库名称（允许为空或NULL）
+     * @param i_TableName  表名称（允许为空或NULL）
      * @param i_PrimaryKey 行主键
      * @param io_RowObject 行对象
      * @return             查不时返回NULL
      */
     @SuppressWarnings({"unchecked"})
     @Override
-    public <E> E getRow(String i_PrimaryKey ,E io_RowObject)
+    public <E> E getRow(String i_Database ,String i_TableName ,String i_PrimaryKey ,E io_RowObject)
     {
         if ( Help.isNull(i_PrimaryKey) )
         {
@@ -1399,7 +1448,28 @@ public class RedisLettuceSingle implements IRedis
         {
             for (Map.Entry<String ,String> v_Item : v_RowDatas.entrySet())
             {
-                ((Map<String ,Object>)io_RowObject).put(v_Item.getKey() ,v_Item.getValue());
+                Class<?> v_ParameterClass = RedisMapType.getType(i_Database ,i_TableName ,v_Item.getKey());
+                Object   v_ParameterValue = v_Item.getValue();
+                
+                if ( v_ParameterClass != null )
+                {
+                    if ( v_Item.getValue() != null )
+                    {
+                        if ( "".equals(v_Item.getValue().trim()) )
+                        {
+                            if ( String.class.equals(v_ParameterClass) )
+                            {
+                                v_ParameterValue = v_Item.getValue();
+                            }
+                        }
+                        else
+                        {
+                            v_ParameterValue = Help.toObject(v_ParameterClass ,v_Item.getValue());
+                        }
+                    }
+                }
+                
+                ((Map<String ,Object>)io_RowObject).put(v_Item.getKey() ,v_ParameterValue);
             }
         }
         else if ( io_RowObject instanceof SerializableDef )
@@ -1630,7 +1700,7 @@ public class RedisLettuceSingle implements IRedis
                     continue;
                 }
                 
-                E v_RowObject = this.getRow(v_RowItem.getKey() ,i_RowClass);
+                E v_RowObject = this.getRow(i_Database ,i_TableName ,v_RowItem.getKey() ,i_RowClass);
                 
                 if ( v_RowObject != null )
                 {
@@ -1697,7 +1767,7 @@ public class RedisLettuceSingle implements IRedis
                     continue;
                 }
                 
-                E v_RowObject = this.getRow(v_RowItem.getKey() ,i_RowClass);
+                E v_RowObject = this.getRow(i_Database ,i_TableName ,v_RowItem.getKey() ,i_RowClass);
                 
                 if ( v_RowObject != null )
                 {
