@@ -35,6 +35,7 @@ import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
  *                                添加：插入、更新和保存一行数据时，可设置过期时间
  *              v3.0  2025-02-06  添加：支持外界定义行数据类型(Class<E> i_RowClass)不是一个Java类，而是一个通用Map结构。
  *                                    注：仅支持Map<String ,Object>结构的Map集合
+ *              v4.0  2025-08-10  添加：getRowsList() 方法
  */
 public class RedisLettuce implements IRedis
 {
@@ -1605,7 +1606,6 @@ public class RedisLettuce implements IRedis
      *
      * @param i_Database   库名称
      * @param i_TableName  表名称
-     * @param i_PrimaryKey 行主键
      * @return             Map.key行主键，Map.Map.key字段名，Map.Map.value字段值
      */
     @Override
@@ -1640,6 +1640,70 @@ public class RedisLettuce implements IRedis
                 if ( !Help.isNull(v_RowObject) )
                 {
                     v_Rows.putRows(v_RowItem.getKey() ,v_RowObject);
+                }
+                else
+                {
+                    // 2024-09-14 Add
+                    // 只有主键信息，没有行数据信息时，删除主键信息
+                    // 这情况产生的原因有：
+                    //     情况1：行数据信息因到过期时间后被Redis释放
+                    //     情况2：本类库Bug而生成的脏数据
+                    //     情况3：本类库生成的结构被第三方窜改
+                    this.delete(i_Database ,i_TableName ,v_RowItem.getKey());
+                }
+            }
+        }
+        
+        v_RowDatas.clear();
+        v_RowDatas = null;
+        return v_Rows;
+    }
+    
+    
+    
+    /**
+     * 获取全表数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2025-08-10
+     * @version     v1.0
+     *
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @return             Map.key行主键，Map.Map.key字段名，Map.Map.value字段值
+     */
+    @Override
+    public List<Map<String ,String>> getRowsList(String i_Database ,String i_TableName)
+    {
+        if ( Help.isNull(i_Database) )
+        {
+            return null;
+        }
+        
+        if ( Help.isNull(i_TableName) )
+        {
+            return null;
+        }
+        
+        List<Map<String ,String>> v_Rows     = new ArrayList<Map<String ,String>>();
+        String                    v_TableID  = this.getTableID(i_Database ,i_TableName);
+        Map<String ,String>       v_RowDatas = this.clusterCmd.hgetall(v_TableID);
+        
+        if ( !Help.isNull(v_RowDatas) )
+        {
+            for (Map.Entry<String ,String> v_RowItem : v_RowDatas.entrySet())
+            {
+                // 空主键是创建表时预留的
+                if ( Help.isNull(v_RowItem.getKey()) )
+                {
+                    continue;
+                }
+                
+                Map<String ,String> v_RowObject = this.getRow(v_RowItem.getKey());
+                
+                if ( !Help.isNull(v_RowObject) )
+                {
+                    v_Rows.add(v_RowObject);
                 }
                 else
                 {

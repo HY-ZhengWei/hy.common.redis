@@ -35,6 +35,7 @@ import org.hy.common.TablePartitionRID;
  *              v3.0  2024-09-23  添加：开放字符串的get、set方法
  *              v4.0  2025-02-06  添加：两个getRow(库名 ,表名 ,类型)接口。
  *                                     用于在支持外界定义行数据类型是一个通用Map结构的同时，允许外界定义Map结构中的每个元素的Java类型
+ *              v5.0  2025-08-10  添加：getRowsList() 方法
  */
 public interface IRedis
 {
@@ -728,10 +729,24 @@ public interface IRedis
      *
      * @param i_Database   库名称
      * @param i_TableName  表名称
-     * @param i_PrimaryKey 行主键
      * @return             Map.key行主键，Map.Map.key字段名，Map.Map.value字段值
      */
     public TablePartitionRID<String ,String> getRows(String i_Database ,String i_TableName);
+    
+    
+    
+    /**
+     * 获取全表数据
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2025-08-10
+     * @version     v1.0
+     *
+     * @param i_Database   库名称
+     * @param i_TableName  表名称
+     * @return             Map.key行主键，Map.Map.key字段名，Map.Map.value字段值
+     */
+    public List<Map<String ,String>> getRowsList(String i_Database ,String i_TableName);
     
     
     
