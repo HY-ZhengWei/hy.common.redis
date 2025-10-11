@@ -109,12 +109,13 @@ public class JU_RedisLettuce
     {
         IRedis v_RedisOpt = (IRedis) XJava.getObject("RedisOperation");
         
-        System.out.println("set: " + v_RedisOpt.set("HY" ,"ABC123"));
-        System.out.println("snx: " + v_RedisOpt.setnx("HY" ,"ABC123"));
-        System.out.println("sex: " + v_RedisOpt.setex("HY" ,"ABC123" ,60L));
+        //System.out.println("set: " + v_RedisOpt.set("HY" ,"ABC123"));
+        // System.out.println("snx: " + v_RedisOpt.setnx("HY" ,"ABC123"));
+        System.out.println("sex: " + v_RedisOpt.setex("HY" ,"ABC123" ,600L));
+        v_RedisOpt.expire("HY" ,700L);
         System.out.println("get: " + v_RedisOpt.get("HY"));
-        System.out.println("gdt: " + v_RedisOpt.getdel("HY"));
-        System.out.println("del: " + v_RedisOpt.del("HY"));
+        // System.out.println("gdt: " + v_RedisOpt.getdel("HY"));
+        // System.out.println("del: " + v_RedisOpt.del("HY"));
     }
     
     

@@ -1552,6 +1552,9 @@ public class RedisLettuce implements IRedis
         
         if ( !Help.isNull(v_Datas) )
         {
+            // 空主键是创建【库】时预留的
+            v_Datas.remove("");
+            
             for (Map.Entry<String ,String> v_Item : v_Datas.entrySet())
             {
                 v_Ret.put(v_Item.getKey() ,new Date(v_Item.getValue()));
@@ -1670,7 +1673,7 @@ public class RedisLettuce implements IRedis
      *
      * @param i_Database   库名称
      * @param i_TableName  表名称
-     * @return             Map.key行主键，Map.Map.key字段名，Map.Map.value字段值
+     * @return             Map.key字段名，Map.value字段值
      */
     @Override
     public List<Map<String ,String>> getRowsList(String i_Database ,String i_TableName)
@@ -1804,7 +1807,7 @@ public class RedisLettuce implements IRedis
      * @param i_TableName  表名称
      * @param i_PrimaryKey 行主键
      * @param i_RowClass   行类型的元类
-     * @return             Map.key行主键，Map.value行数据
+     * @return
      */
     @Override
     public <E> List<E> getRowsList(String i_Database ,String i_TableName ,Class<E> i_RowClass)
@@ -2206,7 +2209,22 @@ public class RedisLettuce implements IRedis
         }
         else
         {
-            return this.clusterCmd.expireat(i_Key ,i_ExpireTime);
+            /* 
+             * 2025-10-10 Edit 发现在集群情况下，无法设置过期时间长，造成Key查不到情况
+             * 
+             * 在 Redis 集群中，SETEX 和 EXPIRE 是两条命令，可能被路由到不同节点或者在两条命令之间，key 所在 slot 被迁移了，最终导致 GET 时找不到 key
+             */
+            // this.clusterCmd.expireat(i_Key ,i_ExpireTime);  Del 2025-10-10
+            
+            String v_Value = this.clusterCmd.get(i_Key);
+            if ( v_Value != null )
+            {
+                return this.setex(i_Key ,v_Value ,i_ExpireTime);
+            }
+            else
+            {
+                return false;
+            }
         }
         
     }

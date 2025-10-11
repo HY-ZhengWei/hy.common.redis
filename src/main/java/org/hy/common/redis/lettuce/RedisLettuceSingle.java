@@ -1550,6 +1550,9 @@ public class RedisLettuceSingle implements IRedis
         
         if ( !Help.isNull(v_Datas) )
         {
+            // 空主键是创建【库】时预留的
+            v_Datas.remove("");
+            
             for (Map.Entry<String ,String> v_Item : v_Datas.entrySet())
             {
                 v_Ret.put(v_Item.getKey() ,new Date(v_Item.getValue()));
@@ -1668,7 +1671,7 @@ public class RedisLettuceSingle implements IRedis
      *
      * @param i_Database   库名称
      * @param i_TableName  表名称
-     * @return             Map.key行主键，Map.Map.key字段名，Map.Map.value字段值
+     * @return             Map.key字段名，Map.value字段值
      */
     @Override
     public List<Map<String ,String>> getRowsList(String i_Database ,String i_TableName)
@@ -1802,7 +1805,7 @@ public class RedisLettuceSingle implements IRedis
      * @param i_TableName  表名称
      * @param i_PrimaryKey 行主键
      * @param i_RowClass   行类型的元类
-     * @return             Map.key行主键，Map.value行数据
+     * @return
      */
     @Override
     public <E> List<E> getRowsList(String i_Database ,String i_TableName ,Class<E> i_RowClass)
