@@ -36,6 +36,7 @@ import org.hy.common.TablePartitionRID;
  *              v4.0  2025-02-06  添加：两个getRow(库名 ,表名 ,类型)接口。
  *                                     用于在支持外界定义行数据类型是一个通用Map结构的同时，允许外界定义Map结构中的每个元素的Java类型
  *              v5.0  2025-08-10  添加：getRowsList() 方法
+ *              v5.0  2026-11-08  添加：队列
  */
 public interface IRedis
 {
@@ -994,5 +995,77 @@ public interface IRedis
      * @return        返回删除数据的数量
      */
     public Long del(String ... i_Keys);
+    
+    
+    
+    /**
+     * 左侧插入队列
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2026-11-08
+     * @version     v1.0
+     *
+     * @param i_Key     关键字
+     * @param i_Values  数据
+     * @return          返回队列长度
+     */
+    public Long lpush(String i_Key ,String ... i_Values);
+    
+    
+    
+    /**
+     * 右侧插入队列
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2026-11-08
+     * @version     v1.0
+     *
+     * @param i_Key     关键字
+     * @param i_Values  数据
+     * @return
+     */
+    public Long rpush(String i_Key ,String ... i_Values);
+    
+    
+    
+    /**
+     * 左侧弹出队列
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2026-11-08
+     * @version     v1.0
+     *
+     * @param i_Key 关键字
+     * @return      返回数据
+     */
+    public String lpop(String i_Key);
+    
+    
+    
+    /**
+     * 右侧弹出队列
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2026-11-08
+     * @version     v1.0
+     *
+     * @param i_Key 关键字
+     * @return      返回数据
+     */
+    public String rpop(String i_Key);
+    
+    
+    
+    /**
+     * 获取队列长度
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2026-11-08
+     * @version     v1.0
+     *
+     * @param i_Key 关键字
+     * @return      返回队列长度
+     */
+    public Long llen(String i_Key);
     
 }

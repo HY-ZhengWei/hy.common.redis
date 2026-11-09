@@ -36,6 +36,7 @@ import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
  *              v3.0  2025-02-06  添加：支持外界定义行数据类型(Class<E> i_RowClass)不是一个Java类，而是一个通用Map结构。
  *                                    注：仅支持Map<String ,Object>结构的Map集合
  *              v4.0  2025-08-10  添加：getRowsList() 方法
+ *              v5.0  2026-11-08  添加：队列
  */
 public class RedisLettuce implements IRedis
 {
@@ -2356,6 +2357,98 @@ public class RedisLettuce implements IRedis
     public Long del(String ... i_Keys)
     {
         return this.clusterCmd.del(i_Keys);
+    }
+    
+    
+    
+    /**
+     * 左侧插入队列
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2026-11-08
+     * @version     v1.0
+     *
+     * @param i_Key     关键字
+     * @param i_Values  数据
+     * @return          返回队列长度
+     */
+    @Override
+    public Long lpush(String i_Key ,String ... i_Values)
+    {
+        return this.clusterCmd.lpush(i_Key ,i_Values);
+    }
+    
+    
+    
+    /**
+     * 右侧插入队列
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2026-11-08
+     * @version     v1.0
+     *
+     * @param i_Key     关键字
+     * @param i_Values  数据
+     * @return
+     */
+    @Override
+    public Long rpush(String i_Key ,String ... i_Values)
+    {
+        return this.clusterCmd.rpush(i_Key ,i_Values);
+    }
+    
+    
+    
+    /**
+     * 左侧弹出队列
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2026-11-08
+     * @version     v1.0
+     *
+     * @param i_Key 关键字
+     * @return      返回数据
+     */
+    @Override
+    public String lpop(String i_Key)
+    {
+        return this.clusterCmd.lpop(i_Key);
+    }
+    
+    
+    
+    /**
+     * 右侧弹出队列
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2026-11-08
+     * @version     v1.0
+     *
+     * @param i_Key 关键字
+     * @return      返回数据
+     */
+    @Override
+    public String rpop(String i_Key)
+    {
+        return this.clusterCmd.rpop(i_Key);
+    }
+    
+    
+    
+    /**
+     * 获取队列长度
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2026-11-08
+     * @version     v1.0
+     *
+     * @param i_Key 关键字
+     * @return      返回队列长度
+     */
+    @Override
+    public Long llen(String i_Key)
+    {
+        return this.clusterCmd.llen(i_Key);
     }
     
 }
